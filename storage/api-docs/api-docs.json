@@ -1,0 +1,1046 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "My API Documentation",
+        "description": "REST API for managing Skills",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/v1/auth/sign-up": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Sign up or log in a user via LinkedIn OAuth",
+                "description": "Authenticates the user against LinkedIn, then either creates a new account or logs the user in if one already exists. Returns 201 if a new account was created, 200 if an existing user logged in.",
+                "operationId": "authSignUp",
+                "responses": {
+                    "200": {
+                        "description": "Existing user successfully logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abcdef123456..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "New user successfully created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abcdef123456..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "421": {
+                        "description": "Could not authenticate with LinkedIn",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Could not authenticate with LinkedIn."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "LinkedIn did not return an email address",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "LinkedIn did not return an email address."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error while signing in or creating the user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong when signing in or refreshing the user."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/users/{user}": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get a single user with their profile",
+                "description": "Returns a user (route-model-bound by ID) along with their related profile.",
+                "operationId": "authShowUser",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of the user to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "profile": {
+                                                            "$ref": "#/components/schemas/Profile"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model [App\\Models\\User]."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profiles": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "List profiles",
+                "description": "Returns a paginated list of profiles, including their skills and projects.",
+                "operationId": "profileIndex",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of profiles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Profile"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 97
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Create a profile",
+                "description": "Not implemented yet — currently always returns a 501 response.",
+                "operationId": "profileStore",
+                "responses": {
+                    "501": {
+                        "description": "Endpoint not implemented",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This endpoint is not implemented yet."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NOT_IMPLEMENTED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profiles/{profile}": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get a single profile",
+                "description": "Returns a profile (route-model-bound by ID) along with its skills and projects.",
+                "operationId": "profileShow",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "description": "ID of the profile to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Profile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model [App\\Models\\Profile]."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update a profile",
+                "description": "Validates the request via UpdateProfileRequest and updates the given profile.",
+                "operationId": "profileUpdate",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "description": "ID of the profile to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Fields to update on the profile. TODO: replace with the actual fields from UpdateProfileRequest::rules().",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "bio": {
+                                        "type": "string",
+                                        "example": "Product designer based in Lille."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Profile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model [App\\Models\\Profile]."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Delete a profile",
+                "description": "Not implemented yet — currently always returns a 501 response.",
+                "operationId": "profileDestroy",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "description": "ID of the profile to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "501": {
+                        "description": "Endpoint not implemented",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This endpoint is not implemented yet."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NOT_IMPLEMENTED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profiles/{profile}/validate": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Validate a profile",
+                "description": "Validates the request via ValidateProfileRequest and runs profile validation logic (e.g. moderation/completeness check).",
+                "operationId": "profileValidate",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "description": "ID of the profile to validate",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Fields required to validate the profile. TODO: replace with the actual fields from ValidateProfileRequest::rules().",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "approved"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile validated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Profile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model [App\\Models\\Profile]."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/skills": {
+            "get": {
+                "tags": [
+                    "Skills"
+                ],
+                "summary": "List all skills",
+                "operationId": "d6396076c036a31691bc99282387f12a",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of skills",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SkillList"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Skills"
+                ],
+                "summary": "Create a new skill",
+                "operationId": "a8068d5934bbdce5b106290c947357bb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Laravel"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Skill created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Skill"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/skills/{id}": {
+            "get": {
+                "tags": [
+                    "Skills"
+                ],
+                "summary": "Get a single skill",
+                "operationId": "d3cd4a49c570ea0205a12163e7ce589d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Skill found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Skill"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Skill not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Skills"
+                ],
+                "summary": "Update a skill",
+                "operationId": "2174910c895206bb610d6a822a0571ee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Laravel"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Skill updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Skill"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Skill not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "VALIDATION_ERROR"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Skills"
+                ],
+                "summary": "Delete a skill",
+                "operationId": "8f01e3e7bb526bf4938d4e1d8d5285fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Skill deleted successfully"
+                    },
+                    "404": {
+                        "description": "Skill not found"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ProfileAccountStatus": {
+                "title": "Profile Account Status",
+                "description": "The status of the profile",
+                "properties": {
+                    "PENDING_VALIDATION": {
+                        "description": "The profile is pending validation",
+                        "type": "string"
+                    },
+                    "VALIDATED": {
+                        "description": "The profile is validated",
+                        "type": "string"
+                    },
+                    "REJECTED": {
+                        "description": "The profile is rejected",
+                        "type": "string"
+                    }
+                },
+                "type": "string",
+                "enum": [
+                    "PENDING_VALIDATION",
+                    "VALIDATED",
+                    "REJECTED"
+                ]
+            },
+            "UserRole": {
+                "title": "User Role",
+                "description": "The role of the user",
+                "properties": {
+                    "USER": {
+                        "description": "A regular user",
+                        "type": "string"
+                    },
+                    "ADMIN": {
+                        "description": "An administrator",
+                        "type": "string"
+                    }
+                },
+                "type": "string",
+                "enum": [
+                    "User",
+                    "Admin"
+                ]
+            },
+            "SkillList": {
+                "title": "SkillList",
+                "description": "Lightweight Skill shape used in list/index responses (no timestamps)",
+                "required": [
+                    "id",
+                    "name",
+                    "slug"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Laravel"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "laravel"
+                    }
+                },
+                "type": "object"
+            },
+            "Profile": {
+                "title": "Profile",
+                "description": "A user profile model",
+                "properties": {
+                    "id": {
+                        "description": "The profile ID",
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "description": "The associated user ID",
+                        "type": "integer"
+                    },
+                    "email": {
+                        "description": "The profile email",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "The profile name",
+                        "type": "string"
+                    },
+                    "headline": {
+                        "description": "The profile headline",
+                        "type": "string"
+                    },
+                    "bio": {
+                        "description": "The profile bio",
+                        "type": "string"
+                    },
+                    "avatar_url": {
+                        "description": "The profile avatar URL",
+                        "type": "string"
+                    },
+                    "location": {
+                        "description": "The profile location",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "The profile status",
+                        "type": "string"
+                    },
+                    "account_status": {
+                        "$ref": "#/components/schemas/ProfileAccountStatus"
+                    },
+                    "skills": {
+                        "description": "Skills linked to this profile",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Skill"
+                        }
+                    },
+                    "projects": {
+                        "description": "Projects linked to this profile",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Project"
+                        }
+                    },
+                    "created_at": {
+                        "description": "The creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "The update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Project": {
+                "title": "Project",
+                "description": "A project model associated with a user profile",
+                "properties": {
+                    "id": {
+                        "description": "The project ID",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "The project title",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "The project description",
+                        "type": "string"
+                    },
+                    "link": {
+                        "description": "The project link",
+                        "type": "string"
+                    },
+                    "profile_id": {
+                        "description": "The associated profile ID",
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "description": "The creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "The update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Skill": {
+                "title": "Skill",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Laravel"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "laravel"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "description": "A user model",
+                "properties": {
+                    "id": {
+                        "description": "The user ID",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "The user name",
+                        "type": "string"
+                    },
+                    "email": {
+                        "description": "The user email",
+                        "type": "string"
+                    },
+                    "avatar_url": {
+                        "description": "The user avatar URL",
+                        "type": "string"
+                    },
+                    "linkedin_id": {
+                        "description": "The user LinkedIn ID",
+                        "type": "string"
+                    },
+                    "email_verified_at": {
+                        "description": "The email verification timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole"
+                    },
+                    "created_at": {
+                        "description": "The creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "The update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
+        },
+        {
+            "name": "Skills",
+            "description": "Skills"
+        }
+    ]
+}
