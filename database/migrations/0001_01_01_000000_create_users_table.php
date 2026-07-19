@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('linkedin_id')->nullable();
+            $table->text('avatar_url')->nullable();
+            $table->boolean('email_verified')->nullable();
+            $table->enum('role', ['USER', 'ADMIN'])->default('USER');
             $table->rememberToken();
             $table->timestamps();
         });
