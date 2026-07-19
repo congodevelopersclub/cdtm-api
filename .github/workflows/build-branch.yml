@@ -1,0 +1,88 @@
+name: Build branch
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: write
+
+jobs:
+  format-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Format code
+        run: composer format
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "formatter[bot]@users.noreply.github.com"
+
+          git add .
+
+          if ! git diff --cached --quiet; then
+            git commit -m "style: :lipstick: apply PHP CS Fixer"
+            git push
+          fi
+
+  build:
+    needs: [format-code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, intl, bcmath, sqlite3, pdo, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: |
+          composer --version
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Create release archive
+        run: |
+          tar --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='storage/logs' \
+              --exclude='storage/framework/cache' \
+              --exclude='storage/framework/sessions' \
+              --exclude='storage/framework/views' \
+              -czf dev-build.tar.gz . || [ $? -eq 1 ]
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Upload release to server
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \
+            dev-build.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/releases/
+
+      - name: Run remote deploy script
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'bash -s' < ./deploy/remote-deploy.sh ${{ secrets.DEPLOY_PATH }} dev-build

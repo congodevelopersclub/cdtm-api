@@ -1,0 +1,35 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - app
+        - routes
+        - database
+        - config
+
+    tmpDir: storage/phpstan
+
+    excludePaths:
+        - vendor
+        - storage
+        - bootstrap/cache
+
+    treatPhpDocTypesAsCertain: false
+
+    reportUnmatchedIgnoredErrors: false
+
+    bootstrapFiles:
+        - vendor/autoload.php
+
+    ignoreErrors:
+        - '#Dynamic call to static method Illuminate\\Http\\Request::validate\(\)#'
+        - '#Call to an undefined method Laravel\\Socialite\\Contracts\\Provider::stateless\(\)#'
+        -
+            identifier: arrayFilter.strict
+            path: config/*
+        -
+            message: '#Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder<.*>::.*#'

@@ -1,0 +1,58 @@
+name: Build Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, intl, bcmath, sqlite3, pdo, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: |
+          composer --version
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Create release archive
+        run: |
+          tar --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='storage/logs' \
+              --exclude='storage/framework/cache' \
+              --exclude='storage/framework/sessions' \
+              --exclude='storage/framework/views' \
+              --exclude='storage/api-docs' \
+              -czf cdtm-api-${{ github.event.release.tag_name }}.tar.gz . || [ $? -eq 1 ]
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Upload release to server
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \
+            cdtm-api-${{ github.event.release.tag_name }}.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/releases/
+
+      - name: Run remote deploy script
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'bash -s' < ./deploy/remote-deploy.sh ${{ secrets.DEPLOY_PATH }} cdtm-api-${{ github.event.release.tag_name }}
