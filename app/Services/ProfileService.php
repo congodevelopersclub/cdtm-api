@@ -96,6 +96,16 @@ class ProfileService
                 $profile->projects()->create($attributes);
             }
         }
+
+        $myvar = $this->testing();
+    }
+
+
+
+    private function testing(): string
+    {
+
+        return 'Hello CDC';
     }
 
 }
