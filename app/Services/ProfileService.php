@@ -102,9 +102,10 @@ class ProfileService
 
 
 
-    private function testing(): string {
+    private function testing(): string
+    {
 
-            return 'Hello CDC';
+        return 'Hello CDC';
     }
 
 }
