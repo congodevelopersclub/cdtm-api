@@ -16,7 +16,7 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->user() === null || ! $request->user()->isAdmin()) {
-            abort(403, 'Admins only.');
+            abort(403, 'this endpoint is only accessible to administrators.');
         }
 
         return $next($request);
