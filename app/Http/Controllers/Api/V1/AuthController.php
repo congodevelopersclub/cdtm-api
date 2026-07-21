@@ -31,7 +31,7 @@ class AuthController extends Controller
             ),
         ]
     )]
-    public function redirect() 
+    public function redirect()
     {
         return Socialite::driver('linkedin-openid')
                 ->stateless()
