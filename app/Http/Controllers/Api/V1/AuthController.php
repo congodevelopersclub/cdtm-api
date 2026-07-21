@@ -84,7 +84,7 @@ class AuthController extends Controller
         $linkedInUser = $this->authService->linkedIdAuthenticate();
 
         // try {
-            
+
         // } catch (\Throwable $e) {
         //     Log::error('LinkedIn OAuth error: ' . $e->getMessage());
         //     return response()->json([
