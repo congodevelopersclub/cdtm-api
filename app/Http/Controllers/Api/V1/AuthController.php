@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use App\Services\AuthService;
 use OpenApi\Attributes as OA;
@@ -14,6 +16,26 @@ class AuthController extends Controller
 {
     public function __construct(private AuthService $authService)
     {
+    }
+
+    #[OA\Get(
+        path: '/api/v1/auth',
+        operationId: 'authRedirect',
+        summary: 'Redirect the user to LinkedIn for authentication',
+        description: 'Redirects the user to LinkedIn for OAuth authentication.',
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 302,
+                description: 'Redirect to LinkedIn OAuth',
+            ),
+        ]
+    )]
+    public function redirect() 
+    {
+        return Socialite::driver('linkedin-openid')
+                ->stateless()
+                ->redirect();
     }
 
     #[OA\Get(
@@ -81,16 +103,14 @@ class AuthController extends Controller
     {
         $linkedInUser = null;
 
-        $linkedInUser = $this->authService->linkedIdAuthenticate();
-
-        // try {
-
-        // } catch (\Throwable $e) {
-        //     Log::error('LinkedIn OAuth error: ' . $e->getMessage());
-        //     return response()->json([
-        //         'message' => 'Could not authenticate with LinkedIn.',
-        //     ], 421);
-        // }
+        try {
+            $linkedInUser = $this->authService->linkedIdAuthenticate();
+        } catch (\Throwable $e) {
+            Log::error('LinkedIn OAuth error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Could not authenticate with LinkedIn.',
+            ], 421);
+        }
 
         if ($linkedInUser->getEmail() === null || $linkedInUser->getEmail() === '') {
             return response()->json([
