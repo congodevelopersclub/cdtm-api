@@ -81,14 +81,16 @@ class AuthController extends Controller
     {
         $linkedInUser = null;
 
-        try {
-            $linkedInUser = $this->authService->linkedIdAuthenticate();
-        } catch (\Throwable $e) {
-            Log::error('LinkedIn OAuth error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Could not authenticate with LinkedIn.',
-            ], 421);
-        }
+        $linkedInUser = $this->authService->linkedIdAuthenticate();
+
+        // try {
+            
+        // } catch (\Throwable $e) {
+        //     Log::error('LinkedIn OAuth error: ' . $e->getMessage());
+        //     return response()->json([
+        //         'message' => 'Could not authenticate with LinkedIn.',
+        //     ], 421);
+        // }
 
         if ($linkedInUser->getEmail() === null || $linkedInUser->getEmail() === '') {
             return response()->json([
