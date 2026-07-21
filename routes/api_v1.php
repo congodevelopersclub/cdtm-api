@@ -16,3 +16,14 @@ Route::post('/profiles', [ProfileController::class, 'store']);
 Route::put('/profiles/{profile}', [ProfileController::class, 'update']);
 Route::delete('/profiles/{profile}', [ProfileController::class, 'destroy']);
 Route::put('/profiles/{profile}/validate', [ProfileController::class, 'validateProfile']);
+
+
+Route::get('/debug-url', function () {
+    return [
+        'app_url_config' => config('app.url'),
+        'request_url' => request()->fullUrl(),
+        'request_scheme' => request()->getScheme(),
+        'is_secure' => request()->isSecure(),
+        'linkedin_redirect_config' => config('services.linkedin.redirect'),
+    ];
+});
