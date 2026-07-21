@@ -24,6 +24,6 @@ Route::get('/debug-url', function () {
         'request_url' => request()->fullUrl(),
         'request_scheme' => request()->getScheme(),
         'is_secure' => request()->isSecure(),
-        'linkedin_redirect_config' => config('services.linkedin.redirect'),
+        'linkedin_redirect_config' => config('services.linkedin-openid.redirect'),
     ];
 });
