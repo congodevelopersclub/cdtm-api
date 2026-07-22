@@ -13,17 +13,17 @@ use OpenApi\Attributes as OA;
     title: 'Project',
     description: 'A project model associated with a user profile',
     properties: [
-        new OA\Property(property: 'id', type: 'integer', description: 'The project ID'),
+        new OA\Property(property: 'id', type: 'uuid', description: 'The project ID', example: '123e4567-e89b-12d3-a456-426614174000'),
         new OA\Property(property: 'title', type: 'string', description: 'The project title'),
         new OA\Property(property: 'description', type: 'string', description: 'The project description'),
         new OA\Property(property: 'link', type: 'string', description: 'The project link'),
-        new OA\Property(property: 'profile_id', type: 'integer', description: 'The associated profile ID'),
+        new OA\Property(property: 'profile_id', type: 'uuid', description: 'The associated profile ID', example: '123e4567-e89b-12d3-a456-426614174000'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]
 )]
 #[Fillable(['title', 'description', 'link', 'profile_id'])]
-class Project extends Model
+class Project extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
