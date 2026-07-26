@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Exceptions\InvalidOAuthCodeException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\AuthenticationException;
@@ -34,6 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        $exceptions->render(function (InvalidOAuthCodeException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Invalid or expired code.',
+                ], 401);
+            }
+        });
+
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
@@ -58,7 +67,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 404);
             }
 
-            // Genuinely unmatched route
             return response()->json([
                 'message' => 'Endpoint not found.',
                 'code' => 'ENDPOINT_NOT_FOUND',
@@ -83,8 +91,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'message' => app()->isProduction() && $status === 500
-                        ? 'Server error.'
+                        ? 'Internal server error.'
                         : $e->getMessage(),
+                    'code' => 'INTERNAL_SERVER_ERROR',
                 ], $status);
             }
         });

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -99,7 +101,7 @@ class AuthController extends Controller
             ),
         ]
     )]
-    public function signUp(): JsonResponse
+    public function signUp(): RedirectResponse
     {
         $linkedInUser = null;
 
@@ -107,83 +109,99 @@ class AuthController extends Controller
             $linkedInUser = $this->authService->linkedIdAuthenticate();
         } catch (\Throwable $e) {
             Log::error('LinkedIn OAuth error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Could not authenticate with LinkedIn.',
-            ], 421);
+            return redirect()->away(
+                config('services.frontend_url') . '/auth/callback?error=' . urlencode('AUTH_FAILED')
+            );
         }
 
         if ($linkedInUser->getEmail() === null || $linkedInUser->getEmail() === '') {
-            return response()->json([
-                'message' => 'LinkedIn did not return an email address.',
-            ], 422);
+           return redirect()->away(
+                config('services.frontend_url') . '/auth/callback?error=' . urlencode('AUTH_FAILED')
+            );
         }
 
         try {
             $data = $this->authService->signUpOrLogin($linkedInUser);
-            return response()->json([
-                'user'  => $data['user'],
-                'token' => $data['token'],
-            ], (bool) $data['is_new_user'] ? 201 : 200);
+
+            return redirect()->away(
+                config('services.frontend_url') . '/auth/callback?code=' . $data['one_time_code']
+            );
         } catch (\Throwable $e) {
             Log::error('LinkedIn OAuth error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Something went wrong when signing in or refreshing the user.',
-            ], 500);
+            return redirect()->away(
+                config('services.frontend_url') . '/auth/callback?error=' . urlencode('AUTH_FAILED')
+            );
         }
     }
 
-
-    #[OA\Get(
-        path: '/api/v1/auth/users/{user}',
-        operationId: 'authShowUser',
-        summary: 'Get a single user with their profile',
-        description: 'Returns a user (route-model-bound by ID) along with their related profile.',
+    #[OA\Post(
+        path: '/api/v1/auth/exchange-code',
+        operationId: 'authExchangeCode',
+        summary: 'Exchange a one-time code for a user and token',
+        description: 'Exchanges a one-time code obtained from LinkedIn OAuth for a user and token.',
         tags: ['Auth'],
-        parameters: [
-            new OA\Parameter(
-                name: 'user',
-                description: 'ID of the user to retrieve',
-                in: 'path',
-                required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
-            ),
-        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'code', type: 'string', example: 'one-time-code'),
+                ],
+                type: 'object'
+            )
+        ),
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'User retrieved successfully',
+                description: 'One-time code exchanged successfully',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(
-                            property: 'data',
-                            allOf: [
-                                new OA\Schema(ref: '#/components/schemas/User'),
-                                new OA\Schema(
-                                    properties: [
-                                        new OA\Property(property: 'profile', ref: '#/components/schemas/Profile'),
-                                    ]
-                                ),
-                            ]
-                        ),
+                        new OA\Property(property: 'token', type: 'string', example: '1|abcdef123456...'),
+                        new OA\Property(property: 'user', ref: '#/components/schemas/User'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Invalid or expired one-time code',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Invalid or expired code.'),
                     ],
                     type: 'object'
                 )
             ),
             new OA\Response(
                 response: 404,
-                description: 'User not found',
+                description: 'User not found for the provided one-time code',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: 'message', type: 'string', example: 'No query results for model [App\\Models\\User].'),
+                        new OA\Property(property: 'message', type: 'string', example: 'App\\Models\\User not found.'),
+                        new OA\Property(property: 'code', type: 'string', example: 'MODEL_NOT_FOUND'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Internal server error while exchanging the one-time code',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Internal server error.'),
+                        new OA\Property(property: 'code', type: 'string', example: 'INTERNAL_SERVER_ERROR'),
                     ],
                     type: 'object'
                 )
             ),
         ]
     )]
-    public function show(User $user): JsonResponse
+    public function exchangeCode(Request $request): JsonResponse
     {
-        return response()->json(['data' => $user->load(['profile'])], 200);
+        $request->validate(['code' => 'required|string']);
+       
+        $data = $this->authService->exchangeOneTimeCode($request->input('code'));
+
+        return response()->json(['token' => $data['token'], 'user' => $data['user']], 200);
     }
 
 }

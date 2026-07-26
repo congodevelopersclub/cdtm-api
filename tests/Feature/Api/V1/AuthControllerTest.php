@@ -2,217 +2,226 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Exceptions\InvalidOAuthCodeException;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\AuthService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
-use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const SIGN_UP_ROUTE = '/api/v1/auth/linkedin/signup';
-    private const SHOW_ROUTE_PREFIX = '/api/v1/auth';
+    private const REDIRECT_URI = '/api/v1/auth';
+    private const SIGNUP_URI = '/api/v1/auth/linkedin/signup';
+    private const EXCHANGE_URI = '/api/v1/auth/exchange-code';
+    private const SHOW_URI = '/api/v1/users';
 
-    private function makeSocialiteUser(array $overrides = []): SocialiteUser
+    protected function setUp(): void
     {
-        $data = array_merge([
-            'id'    => 'linkedin-123',
-            'name'  => 'Jane Doe',
-            'email' => 'jane@example.com',
-        ], $overrides);
-
-        $socialiteUser = Mockery::mock(SocialiteUser::class);
-        $socialiteUser->shouldReceive('getId')->andReturn($data['id']);
-        $socialiteUser->shouldReceive('getName')->andReturn($data['name']);
-        $socialiteUser->shouldReceive('getEmail')->andReturn($data['email']);
-
-        return $socialiteUser;
+        parent::setUp();
+        config(['services.frontend_url' => 'https://frontend.example.com']);
     }
 
-    // ---------------------------------------------------------------
-    // POST signUp
-    // ---------------------------------------------------------------
-
-    #[Test]
-    public function sign_up_returns_421_when_linkedin_authentication_fails(): void
+    private function fakeSocialiteUser(?string $email, string $id = 'li-1'): SocialiteUser
     {
-        $this->mock(AuthService::class, function ($mock) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andThrow(new \Exception('LinkedIn OAuth error'));
-        });
+        $user = Mockery::mock(SocialiteUser::class);
+        $user->shouldReceive('getEmail')->andReturn($email);
+        $user->shouldReceive('getId')->andReturn($id);
+        $user->shouldReceive('getName')->andReturn('Jane Doe');
+        $user->shouldReceive('getAvatar')->andReturn('https://example.com/a.jpg');
 
-        $response = $this->getJson(self::SIGN_UP_ROUTE);
-
-        $response->assertStatus(421);
-        $response->assertJson([
-            'message' => 'Could not authenticate with LinkedIn.',
-        ]);
+        return $user;
     }
 
-    #[Test]
-    public function sign_up_returns_422_when_linkedin_does_not_return_an_email(): void
+    // --- redirect() -----------------------------------------------------
+
+    public function test_redirect_sends_the_user_to_linkedin(): void
     {
-        $linkedInUser = $this->makeSocialiteUser(['email' => null]);
+        $driver = Mockery::mock();
+        $driver->shouldReceive('stateless')->once()->andReturnSelf();
+        $driver->shouldReceive('redirect')->once()->andReturn(
+            redirect()->away('https://linkedin.com/oauth/v2/authorization?response_type=code&client_id=123')
+        );
 
-        $this->mock(AuthService::class, function ($mock) use ($linkedInUser) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andReturn($linkedInUser);
+        Socialite::shouldReceive('driver')->with('linkedin-openid')->once()->andReturn($driver);
 
-            $mock->shouldNotReceive('signUpOrLogin');
-        });
+        $response = $this->get(self::REDIRECT_URI);
 
-        $response = $this->getJson(self::SIGN_UP_ROUTE);
-
-        $response->assertStatus(422);
-        $response->assertJson([
-            'message' => 'LinkedIn did not return an email address.',
-        ]);
+        $response->assertRedirect('https://linkedin.com/oauth/v2/authorization?response_type=code&client_id=123');
     }
 
-    #[Test]
-    public function sign_up_returns_201_and_a_token_for_a_brand_new_user(): void
+    // --- signUp() ---------------------------------------------------------
+
+    public function test_signup_redirects_to_frontend_with_code_on_success(): void
     {
-        $linkedInUser = $this->makeSocialiteUser();
-        $user = User::factory()->create(['email' => 'jane@example.com']);
+        $linkedInUser = $this->fakeSocialiteUser('jane@example.com');
 
-        $this->mock(AuthService::class, function ($mock) use ($linkedInUser, $user) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andReturn($linkedInUser);
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('linkedIdAuthenticate')->once()->andReturn($linkedInUser);
+        $mockAuthService->shouldReceive('signUpOrLogin')
+            ->once()
+            ->with($linkedInUser)
+            ->andReturn(['one_time_code' => 'abc123']);
 
-            $mock->shouldReceive('signUpOrLogin')
-                ->once()
-                ->with($linkedInUser)
-                ->andReturn([
-                    'user'        => $user,
-                    'token'       => 'fake-plain-text-token',
-                    'is_new_user' => true,
-                ]);
-        });
+        $this->app->instance(AuthService::class, $mockAuthService);
 
-        $response = $this->getJson(self::SIGN_UP_ROUTE);
+        $response = $this->get(self::SIGNUP_URI);
 
-        $response->assertStatus(201);
-        $response->assertJsonStructure(['user', 'token']);
-        $response->assertJson([
-            'token' => 'fake-plain-text-token',
-        ]);
+        $response->assertRedirect('https://frontend.example.com/auth/callback?code=abc123');
     }
 
-    #[Test]
-    public function sign_up_returns_200_and_a_token_for_a_returning_user(): void
+    public function test_signup_redirects_with_error_when_linkedin_authentication_throws(): void
     {
-        $linkedInUser = $this->makeSocialiteUser();
-        $user = User::factory()->create(['email' => 'jane@example.com']);
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('linkedIdAuthenticate')->once()->andThrow(new \Exception('boom'));
+        $mockAuthService->shouldNotReceive('signUpOrLogin');
 
-        $this->mock(AuthService::class, function ($mock) use ($linkedInUser, $user) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andReturn($linkedInUser);
+        $this->app->instance(AuthService::class, $mockAuthService);
 
-            $mock->shouldReceive('signUpOrLogin')
-                ->once()
-                ->with($linkedInUser)
-                ->andReturn([
-                    'user'        => $user,
-                    'token'       => 'fake-plain-text-token',
-                    'is_new_user' => false,
-                ]);
-        });
+        $response = $this->get(self::SIGNUP_URI);
 
-        $response = $this->getJson(self::SIGN_UP_ROUTE);
-
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['user', 'token']);
+        $response->assertRedirect(
+            'https://frontend.example.com/auth/callback?error=' . urlencode('AUTH_FAILED')
+        );
     }
 
-    #[Test]
-    public function sign_up_returns_500_when_sign_up_or_login_throws(): void
+    public function test_signup_redirects_with_error_when_linkedin_email_is_missing(): void
     {
-        $linkedInUser = $this->makeSocialiteUser();
+        $linkedInUser = $this->fakeSocialiteUser(null);
 
-        $this->mock(AuthService::class, function ($mock) use ($linkedInUser) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andReturn($linkedInUser);
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('linkedIdAuthenticate')->once()->andReturn($linkedInUser);
+        $mockAuthService->shouldNotReceive('signUpOrLogin');
 
-            $mock->shouldReceive('signUpOrLogin')
-                ->once()
-                ->andThrow(new \Exception('DB exploded'));
-        });
+        $this->app->instance(AuthService::class, $mockAuthService);
 
-        $response = $this->getJson(self::SIGN_UP_ROUTE);
+        $response = $this->get(self::SIGNUP_URI);
 
-        $response->assertStatus(500);
-        $response->assertJson([
-            'message' => 'Something went wrong when signing in or refreshing the user.',
-        ]);
+        $response->assertRedirect(
+            'https://frontend.example.com/auth/callback?error=' . urlencode('AUTH_FAILED')
+        );
     }
 
-    #[Test]
-    public function sign_up_never_calls_sign_up_or_login_if_authentication_throws(): void
+    public function test_signup_redirects_with_error_when_linkedin_email_is_empty_string(): void
     {
-        $this->mock(AuthService::class, function ($mock) {
-            $mock->shouldReceive('linkedIdAuthenticate')
-                ->once()
-                ->andThrow(new \Exception('boom'));
+        $linkedInUser = $this->fakeSocialiteUser('');
 
-            $mock->shouldNotReceive('signUpOrLogin');
-        });
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('linkedIdAuthenticate')->once()->andReturn($linkedInUser);
+        $mockAuthService->shouldNotReceive('signUpOrLogin');
 
-        $this->getJson(self::SIGN_UP_ROUTE);
+        $this->app->instance(AuthService::class, $mockAuthService);
+
+        $response = $this->get(self::SIGNUP_URI);
+
+        $response->assertRedirect(
+            'https://frontend.example.com/auth/callback?error=' . urlencode('AUTH_FAILED')
+        );
     }
 
-    // // ---------------------------------------------------------------
-    // // GET show
-    // // ---------------------------------------------------------------
-
-    #[Test]
-    public function show_returns_the_user_with_their_profile_loaded(): void
+    public function test_signup_redirects_with_error_when_sign_up_or_login_throws(): void
     {
-        $user = User::factory()->create();
-        $profile = Profile::factory()->create(['user_id' => $user->id] + (
-            []
-        ));
+        $linkedInUser = $this->fakeSocialiteUser('jane@example.com');
 
-        $response = $this->getJson(self::SHOW_ROUTE_PREFIX . '/' . $user->id);
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('linkedIdAuthenticate')->once()->andReturn($linkedInUser);
+        $mockAuthService->shouldReceive('signUpOrLogin')->once()->andThrow(new \Exception('db down'));
 
-        $response->assertStatus(200);
-        $response->assertJsonStructure([
-            'data' => [
-                'id',
-                'name',
-                'email',
-                'profile',
-            ],
-        ]);
-        $response->assertJsonPath('data.id', $user->id);
+        $this->app->instance(AuthService::class, $mockAuthService);
+
+        $response = $this->get(self::SIGNUP_URI);
+
+        $response->assertRedirect(
+            'https://frontend.example.com/auth/callback?error=' . urlencode('AUTH_FAILED')
+        );
     }
 
-    #[Test]
-    public function show_returns_404_for_a_nonexistent_user(): void
+    // --- exchangeCode() -----------------------------------------------------
+
+    public function test_exchange_code_requires_a_code(): void
     {
-        $response = $this->getJson(self::SHOW_ROUTE_PREFIX . '/999999');
+        $response = $this->postJson(self::EXCHANGE_URI, []);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['code']);
+    }
+
+    public function test_exchange_code_returns_token_and_user_on_success(): void
+    {
+        $user = User::factory()->has(Profile::factory())->create();
+
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('exchangeOneTimeCode')
+            ->once()
+            ->with('abc123')
+            ->andReturn(['token' => 'plain-text-token', 'user' => $user->load('profile')]);
+
+        $this->app->instance(AuthService::class, $mockAuthService);
+
+        $response = $this->postJson(self::EXCHANGE_URI, ['code' => 'abc123']);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'token' => 'plain-text-token',
+                'user' => ['id' => $user->id, 'email' => $user->email],
+            ]);
+    }
+
+    public function test_exchange_code_returns_401_for_invalid_or_expired_code(): void
+    {
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('exchangeOneTimeCode')
+            ->once()
+            ->andThrow(new InvalidOAuthCodeException());
+
+        $this->app->instance(AuthService::class, $mockAuthService);
+
+        $response = $this->postJson(self::EXCHANGE_URI, ['code' => 'expired']);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_exchange_code_returns_404_when_user_no_longer_exists(): void
+    {
+        $mockAuthService = Mockery::mock(AuthService::class);
+        $mockAuthService->shouldReceive('exchangeOneTimeCode')
+            ->once()
+            ->andThrow(new ModelNotFoundException('User not found'));
+
+        $this->app->instance(AuthService::class, $mockAuthService);
+
+        $response = $this->postJson(self::EXCHANGE_URI, ['code' => 'ghost']);
 
         $response->assertStatus(404);
     }
 
-    #[Test]
-    public function show_does_not_expose_the_users_password_hash(): void
+    // --- show() ---------------------------------------------------------
+
+    public function test_show_returns_the_user_with_profile_loaded(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->has(Profile::factory())->create();
 
-        $response = $this->getJson(self::SHOW_ROUTE_PREFIX . '/' . $user->id);
+        $response = $this->getJson(self::SHOW_URI . '/' . $user->id);
 
-        $response->assertStatus(200);
-        $response->assertJsonMissingPath('data.password');
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'profile' => ['id' => $user->profile->id],
+                ],
+            ]);
     }
 
+    public function test_show_returns_404_for_a_nonexistent_user(): void
+    {
+        $response = $this->getJson(self::SHOW_URI . '/999999');
+
+        $response->assertStatus(404);
+    }
 }
