@@ -133,7 +133,7 @@ class ProfileController extends Controller
     }
 
 
-    #[OA\Put(
+    #[OA\Patch(
         path: '/api/v1/profiles/{profile}',
         operationId: 'profileUpdate',
         summary: 'Update a profile',

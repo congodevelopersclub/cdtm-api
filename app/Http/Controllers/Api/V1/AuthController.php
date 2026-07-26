@@ -115,7 +115,7 @@ class AuthController extends Controller
         }
 
         if ($linkedInUser->getEmail() === null || $linkedInUser->getEmail() === '') {
-           return redirect()->away(
+            return redirect()->away(
                 config('services.frontend_url') . '/auth/callback?error=' . urlencode('AUTH_FAILED')
             );
         }
@@ -198,10 +198,39 @@ class AuthController extends Controller
     public function exchangeCode(Request $request): JsonResponse
     {
         $request->validate(['code' => 'required|string']);
-       
+
         $data = $this->authService->exchangeOneTimeCode($request->input('code'));
 
         return response()->json(['token' => $data['token'], 'user' => $data['user']], 200);
+    }
+
+    #[OA\Get(
+        path: '/api/v1/me',
+        summary: 'Get the authenticated user',
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Authenticated user retrieved successfully',
+                content: new OA\JsonContent(
+                    ref: '#/components/schemas/User'
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
+    public function me(Request $request): JsonResponse
+    {
+        return response()->json($request->user(), 200);
     }
 
 }

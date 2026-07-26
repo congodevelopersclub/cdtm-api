@@ -10,7 +10,6 @@ use OpenApi\Attributes as OA;
 
 class UserController extends Controller
 {
-
     #[OA\Get(
         path: '/api/v1/users/{user}',
         operationId: 'getUserById',

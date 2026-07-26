@@ -27,7 +27,7 @@ class AuthService
 
     /**
      * Sign up or log in a user based on the LinkedIn OAuth user data.
-     * 
+     *
      * @return array{user: User, token: string, is_new_user: bool}
      */
     public function signUpOrLogin(SocialiteUser $linkedInUser): array
@@ -108,7 +108,7 @@ class AuthService
         return $user->createToken('api')->plainTextToken;
     }
 
-    private function generateAndCacheOneTimeCode(string $user_id, string $token): string 
+    private function generateAndCacheOneTimeCode(string $user_id, string $token): string
     {
         $oneTimeCode = Str::random(40);
         Cache::put("oauth_code:{$oneTimeCode}", [
