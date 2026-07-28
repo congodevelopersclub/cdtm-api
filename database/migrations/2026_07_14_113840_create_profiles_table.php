@@ -18,6 +18,7 @@ return new class () extends Migration {
                 ->onDelete('cascade');
             $table->string('email')->unique();
             $table->string('name')->nullable();
+            $table->string('linkedin_id');
             $table->string('headline')->nullable();
             $table->text('bio')->nullable();
             $table->string('avatar_url')->nullable();

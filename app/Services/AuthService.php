@@ -94,6 +94,7 @@ class AuthService
             $user->profile()->create([
                 'name' => $user->name,
                 'email' => $user->email,
+                'linkedin_id' => $user->linkedin_id,
                 'avatar_url' => $user->avatar_url,
                 'account_status' => 'PENDING_VALIDATION',
             ]);
