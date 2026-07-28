@@ -36,9 +36,9 @@ use OpenApi\Attributes as OA;
             items: new OA\Items(
                 properties: [
                     new OA\Property(property: 'id', type: ['integer','null'], description:'Project ID (nullable for new projects)', example:null),
-                    new OA\Property(property:'title',type:'string',description:'Project title',example:'Portfolio Website'),
-                    new OA\Property(property:'description',type:['string','null'],description:'Project description (nullable)',example:'A personal portfolio website built with Laravel.'),
-                    new OA\Property(property:'link',type:['string','null'],description:'Project link (nullable)',example:'https://portfolio.example.com'),
+                    new OA\Property(property:'title', type:'string', description:'Project title', example:'Portfolio Website'),
+                    new OA\Property(property:'description', type:['string','null'], description:'Project description (nullable)', example:'A personal portfolio website built with Laravel.'),
+                    new OA\Property(property:'link', type:['string','null'], description:'Project link (nullable)', example:'https://portfolio.example.com'),
                 ],
                 type:'object'
             )
