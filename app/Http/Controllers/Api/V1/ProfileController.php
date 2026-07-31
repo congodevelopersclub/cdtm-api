@@ -152,10 +152,7 @@ class ProfileController extends Controller
             required: true,
             description: 'Fields to update on the profile. TODO: replace with the actual fields from UpdateProfileRequest::rules().',
             content: new OA\JsonContent(
-                properties: [
-                        new OA\Property(property: 'data', ref: '#/components/schemas/UpdateProfileRequest'),
-                    ],
-                type: 'object'
+                ref: '#/components/schemas/UpdateProfileRequest'
             )
         ),
         responses: [

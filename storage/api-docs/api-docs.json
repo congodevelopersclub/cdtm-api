@@ -12,6 +12,21 @@
         }
     ],
     "paths": {
+        "/api/v1/auth": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Redirect the user to LinkedIn for authentication",
+                "description": "Redirects the user to LinkedIn for OAuth authentication.",
+                "operationId": "authRedirect",
+                "responses": {
+                    "302": {
+                        "description": "Redirect to LinkedIn OAuth"
+                    }
+                }
+            }
+        },
         "/api/v1/auth/sign-up": {
             "get": {
                 "tags": [
@@ -110,47 +125,59 @@
                 }
             }
         },
-        "/api/v1/auth/users/{user}": {
-            "get": {
+        "/api/v1/auth/exchange-code": {
+            "post": {
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Get a single user with their profile",
-                "description": "Returns a user (route-model-bound by ID) along with their related profile.",
-                "operationId": "authShowUser",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "description": "ID of the user to retrieve",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
+                "summary": "Exchange a one-time code for a user and token",
+                "description": "Exchanges a one-time code obtained from LinkedIn OAuth for a user and token.",
+                "operationId": "authExchangeCode",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "one-time-code"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "200": {
-                        "description": "User retrieved successfully",
+                        "description": "One-time code exchanged successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
-                                            "allOf": [
-                                                {
-                                                    "$ref": "#/components/schemas/User"
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "profile": {
-                                                            "$ref": "#/components/schemas/Profile"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            ]
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abcdef123456..."
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired one-time code",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid or expired code."
                                         }
                                     },
                                     "type": "object"
@@ -159,14 +186,75 @@
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "User not found for the provided one-time code",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "No query results for model [App\\Models\\User]."
+                                            "example": "App\\Models\\User not found."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "MODEL_NOT_FOUND"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error while exchanging the one-time code",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Internal server error."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INTERNAL_SERVER_ERROR"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get the authenticated user",
+                "operationId": "13b43df400e475a157538f73617b8c3d",
+                "responses": {
+                    "200": {
+                        "description": "Authenticated user retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
                                         }
                                     },
                                     "type": "object"
@@ -250,7 +338,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "This endpoint is not implemented yet."
+                                            "example": "This endpoint is not implemented yet. The profile creation logic is handled during user registration so far."
                                         },
                                         "code": {
                                             "type": "string",
@@ -319,7 +407,49 @@
                     }
                 }
             },
-            "put": {
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Delete a profile",
+                "description": "Not implemented yet — currently always returns a 501 response.",
+                "operationId": "profileDestroy",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "description": "ID of the profile to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "501": {
+                        "description": "Endpoint not implemented",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This endpoint is not implemented yet."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NOT_IMPLEMENTED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "tags": [
                     "Profile"
                 ],
@@ -344,13 +474,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "bio": {
-                                        "type": "string",
-                                        "example": "Product designer based in Lille."
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/UpdateProfileRequest"
                             }
                         }
                     }
@@ -399,48 +523,6 @@
                                         "message": {
                                             "type": "string",
                                             "example": "No query results for model [App\\Models\\Profile]."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Profile"
-                ],
-                "summary": "Delete a profile",
-                "description": "Not implemented yet — currently always returns a 501 response.",
-                "operationId": "profileDestroy",
-                "parameters": [
-                    {
-                        "name": "profile",
-                        "in": "path",
-                        "description": "ID of the profile to delete",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "501": {
-                        "description": "Endpoint not implemented",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "This endpoint is not implemented yet."
-                                        },
-                                        "code": {
-                                            "type": "string",
-                                            "example": "NOT_IMPLEMENTED"
                                         }
                                     },
                                     "type": "object"
@@ -768,6 +850,77 @@
                     }
                 }
             }
+        },
+        "/api/v1/users/{user}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get a single user with their profile",
+                "description": "Returns a user (route-model-bound by ID) along with their related profile.",
+                "operationId": "getUserById",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of the user to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "profile": {
+                                                            "$ref": "#/components/schemas/Profile"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "MODEL_NOT_FOUND"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -815,6 +968,89 @@
                     "Admin"
                 ]
             },
+            "UpdateProfileRequest": {
+                "title": "Update Profile Request",
+                "description": "Request payload for updating a user profile",
+                "properties": {
+                    "name": {
+                        "description": "The profile name",
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "bio": {
+                        "description": "The profile bio",
+                        "type": "string",
+                        "example": "Product designer based in Lille."
+                    },
+                    "headline": {
+                        "description": "The profile headline",
+                        "type": "string",
+                        "example": "Senior Product Designer"
+                    },
+                    "location": {
+                        "description": "The profile location",
+                        "type": "string",
+                        "example": "Lille, France"
+                    },
+                    "skills": {
+                        "description": "Skills linked to this profile",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "description": "Skill name",
+                                    "type": "string",
+                                    "example": "Laravel"
+                                },
+                                "proficiency": {
+                                    "description": "Skill proficiency level (1-5)",
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "years_experience": {
+                                    "description": "Years of experience with the skill",
+                                    "type": "integer",
+                                    "example": 3
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "projects": {
+                        "description": "Projects linked to this profile",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "description": "Project ID (nullable for new projects)",
+                                    "type": "integer",
+                                    "example": null,
+                                    "nullable": true
+                                },
+                                "title": {
+                                    "description": "Project title",
+                                    "type": "string",
+                                    "example": "Portfolio Website"
+                                },
+                                "description": {
+                                    "description": "Project description (nullable)",
+                                    "type": "string",
+                                    "example": "A personal portfolio website built with Laravel.",
+                                    "nullable": true
+                                },
+                                "link": {
+                                    "description": "Project link (nullable)",
+                                    "type": "string",
+                                    "example": "https://portfolio.example.com",
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "SkillList": {
                 "title": "SkillList",
                 "description": "Lightweight Skill shape used in list/index responses (no timestamps)",
@@ -845,11 +1081,13 @@
                 "properties": {
                     "id": {
                         "description": "The profile ID",
-                        "type": "integer"
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "user_id": {
                         "description": "The associated user ID",
-                        "type": "integer"
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "email": {
                         "description": "The profile email",
@@ -857,6 +1095,10 @@
                     },
                     "name": {
                         "description": "The profile name",
+                        "type": "string"
+                    },
+                    "linkedin_id": {
+                        "description": "The profile LinkedIn ID",
                         "type": "string"
                     },
                     "headline": {
@@ -915,7 +1157,8 @@
                 "properties": {
                     "id": {
                         "description": "The project ID",
-                        "type": "integer"
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "title": {
                         "description": "The project title",
@@ -931,7 +1174,8 @@
                     },
                     "profile_id": {
                         "description": "The associated profile ID",
-                        "type": "integer"
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "created_at": {
                         "description": "The creation timestamp",
@@ -953,8 +1197,8 @@
                 ],
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "example": 1
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "name": {
                         "type": "string",
@@ -981,7 +1225,8 @@
                 "properties": {
                     "id": {
                         "description": "The user ID",
-                        "type": "integer"
+                        "type": "uuid",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     },
                     "name": {
                         "description": "The user name",
@@ -1041,6 +1286,10 @@
         {
             "name": "Skills",
             "description": "Skills"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
         }
     ]
 }
