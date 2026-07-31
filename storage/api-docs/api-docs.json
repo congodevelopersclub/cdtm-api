@@ -265,7 +265,7 @@
                 }
             }
         },
-        "/api/v1/profiles": {
+        "/v1/profiles": {
             "get": {
                 "tags": [
                     "Profile"
@@ -353,7 +353,7 @@
                 }
             }
         },
-        "/api/v1/profiles/{profile}": {
+        "/v1/profiles/{profile}": {
             "get": {
                 "tags": [
                     "Profile"
@@ -533,7 +533,7 @@
                 }
             }
         },
-        "/api/v1/profiles/{profile}/validate": {
+        "/v1/profiles/{profile}/validate": {
             "post": {
                 "tags": [
                     "Profile"
@@ -624,13 +624,13 @@
                 }
             }
         },
-        "/skills": {
+        "/v1/skills": {
             "get": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "List all skills",
-                "operationId": "d6396076c036a31691bc99282387f12a",
+                "operationId": "b6cfc29491b59d0a6a5e2b8909b39321",
                 "parameters": [
                     {
                         "name": "page",
@@ -672,7 +672,7 @@
                     "Skills"
                 ],
                 "summary": "Create a new skill",
-                "operationId": "a8068d5934bbdce5b106290c947357bb",
+                "operationId": "3c4151b695f8d3745854b20134442e93",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -714,13 +714,13 @@
                 }
             }
         },
-        "/skills/{id}": {
+        "/v1/skills/{id}": {
             "get": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "Get a single skill",
-                "operationId": "d3cd4a49c570ea0205a12163e7ce589d",
+                "operationId": "e664490c400f91146fbbbbae843e5268",
                 "parameters": [
                     {
                         "name": "id",
@@ -757,7 +757,7 @@
                     "Skills"
                 ],
                 "summary": "Update a skill",
-                "operationId": "2174910c895206bb610d6a822a0571ee",
+                "operationId": "3ecb483966b4c14150dc382d5791308b",
                 "parameters": [
                     {
                         "name": "id",
@@ -830,7 +830,7 @@
                     "Skills"
                 ],
                 "summary": "Delete a skill",
-                "operationId": "8f01e3e7bb526bf4938d4e1d8d5285fb",
+                "operationId": "eef67dad50e76bb4020ed0859e83ac09",
                 "parameters": [
                     {
                         "name": "id",

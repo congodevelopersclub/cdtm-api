@@ -13,7 +13,7 @@ use OpenApi\Attributes as OA;
 class SkillController extends Controller
 {
     #[OA\Get(
-        path: "/skills",
+        path: "/v1/skills",
         summary: "List all skills",
         tags: ["Skills"],
         parameters: [
@@ -44,7 +44,7 @@ class SkillController extends Controller
     }
 
     #[OA\Post(
-        path: "/skills",
+        path: "/v1/skills",
         summary: "Create a new skill",
         tags: ["Skills"],
         requestBody: new OA\RequestBody(
@@ -83,7 +83,7 @@ class SkillController extends Controller
     }
 
     #[OA\Get(
-        path: "/skills/{id}",
+        path: "/v1/skills/{id}",
         summary: "Get a single skill",
         tags: ["Skills"],
         parameters: [
@@ -109,7 +109,7 @@ class SkillController extends Controller
     }
 
     #[OA\Put(
-        path: "/skills/{id}",
+        path: "/v1/skills/{id}",
         summary: "Update a skill",
         tags: ["Skills"],
         parameters: [
@@ -159,7 +159,7 @@ class SkillController extends Controller
     }
 
     #[OA\Delete(
-        path: "/skills/{id}",
+        path: "/v1/skills/{id}",
         summary: "Delete a skill",
         tags: ["Skills"],
         parameters: [

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\ProfileResource;
 use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
 use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
@@ -18,7 +19,7 @@ class ProfileController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/profiles',
+        path: '/v1/profiles',
         operationId: 'profileIndex',
         summary: 'List profiles',
         description: 'Returns a paginated list of profiles, including their skills and projects.',
@@ -53,15 +54,16 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function index(): JsonResponse
+    public function index(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $posts = Profile::with(['skills', 'projects'])->paginate(20);
-        return response()->json($posts, 200);
+        $profiles = Profile::with(['skills', 'projects'])->paginate(20);
+        return ProfileResource::collection($profiles);
     }
 
 
+
     #[OA\Post(
-        path: '/api/v1/profiles',
+        path: '/v1/profiles',
         operationId: 'profileStore',
         summary: 'Create a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
@@ -90,7 +92,7 @@ class ProfileController extends Controller
 
 
     #[OA\Get(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileShow',
         summary: 'Get a single profile',
         description: 'Returns a profile (route-model-bound by ID) along with its skills and projects.',
@@ -129,12 +131,12 @@ class ProfileController extends Controller
     )]
     public function show(Profile $profile): JsonResponse
     {
-        return response()->json(['data' => $profile->load(['skills', 'projects'])], 200);
+        return response()->json(new ProfileResource($profile->load(['skills', 'projects'])), 200);
     }
 
 
     #[OA\Patch(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileUpdate',
         summary: 'Update a profile',
         description: 'Validates the request via UpdateProfileRequest and updates the given profile.',
@@ -200,7 +202,7 @@ class ProfileController extends Controller
 
 
     #[OA\Post(
-        path: '/api/v1/profiles/{profile}/validate',
+        path: '/v1/profiles/{profile}/validate',
         operationId: 'profileValidate',
         summary: 'Validate a profile',
         description: 'Validates the request via ValidateProfileRequest and runs profile validation logic (e.g. moderation/completeness check).',
@@ -269,7 +271,7 @@ class ProfileController extends Controller
 
 
     #[OA\Delete(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileDestroy',
         summary: 'Delete a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
