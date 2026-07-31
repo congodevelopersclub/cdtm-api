@@ -34,4 +34,37 @@ class ProfileControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.id', $profile->id);
     }
+
+    public function test_store_returns_not_implemented(): void
+    {
+        $this->postJson('/api/v1/profiles')->assertStatus(501);
+    }
+
+    public function test_destroy_returns_not_implemented(): void
+    {
+        $profile = Profile::factory()->create();
+        $this->deleteJson("/api/v1/profiles/{$profile->id}")->assertStatus(501);
+    }
+
+    public function test_can_update_profile(): void
+    {
+        $profile = Profile::factory()->create();
+
+        $response = $this->putJson("/api/v1/profiles/{$profile->id}", [
+            'name' => 'John Updated',
+        ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_can_validate_profile(): void
+    {
+        $profile = Profile::factory()->create();
+
+        $response = $this->putJson("/api/v1/profiles/{$profile->id}/validate", [
+            'account_status' => \App\Enums\ProfileAccountStatus::VALIDATED->value,
+        ]);
+
+        $response->assertStatus(200);
+    }
 }
