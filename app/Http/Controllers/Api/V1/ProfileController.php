@@ -129,9 +129,9 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function show(Profile $profile): JsonResponse
+    public function show(Profile $profile): ProfileResource
     {
-        return response()->json(new ProfileResource($profile->load(['skills', 'projects'])), 200);
+        return new ProfileResource($profile->load(['skills', 'projects']));
     }
 
 
