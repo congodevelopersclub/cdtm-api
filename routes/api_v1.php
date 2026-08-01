@@ -22,5 +22,5 @@ Route::put('profiles/{profile}/validate', [ProfileController::class, 'validatePr
 // Route::middleware('auth:sanctum')->group(function () {
 //     Route::get('me', [AuthController::class, 'me'])->name('auth.me');
 
-    
+
 // });
