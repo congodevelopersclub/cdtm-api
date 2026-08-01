@@ -28,7 +28,7 @@ class AuthService
     /**
      * Sign up or log in a user based on the LinkedIn OAuth user data.
      *
-     * @return array{user: User, token: string, is_new_user: bool}
+     * @return array{one_time_code: string}
      */
     public function signUpOrLogin(SocialiteUser $linkedInUser): array
     {
@@ -64,7 +64,7 @@ class AuthService
     public function exchangeOneTimeCode(string $code): ?array
     {
         $token_data = Cache::pull("oauth_code:{$code}");
-        if (empty($token_data) || !isset($token_data['user_id'], $token_data['token'])) {
+        if ($token_data === null || !isset($token_data['user_id'], $token_data['token'])) {
             throw new InvalidOAuthCodeException();
         }
 
