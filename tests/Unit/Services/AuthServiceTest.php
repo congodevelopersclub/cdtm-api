@@ -2,10 +2,13 @@
 
 namespace Tests\Unit\Services;
 
+use App\Exceptions\InvalidOAuthCodeException;
+use App\Models\Profile;
 use App\Models\User;
 use App\Services\AuthService;
-use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
@@ -15,213 +18,159 @@ class AuthServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private AuthService $authService;
+    private AuthService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->authService = new AuthService();
+        $this->service = new AuthService();
     }
 
-    protected function tearDown(): void
-    {
-        Mockery::close();
+    private function fakeSocialiteUser(
+        string $id,
+        string $email,
+        string $name = 'Jane Doe',
+        string $avatar = 'https://example.com/avatar.jpg'
+    ): SocialiteUser {
+        $user = Mockery::mock(SocialiteUser::class);
+        $user->shouldReceive('getId')->andReturn($id);
+        $user->shouldReceive('getEmail')->andReturn($email);
+        $user->shouldReceive('getName')->andReturn($name);
+        $user->shouldReceive('getAvatar')->andReturn($avatar);
 
-        parent::tearDown();
+        return $user;
     }
 
-    /**
-     * Build a mock SocialiteUser with sensible defaults, overridable per test.
-     */
-    private function makeSocialiteUser(array $overrides = []): SocialiteUser
+    // --- linkedIdAuthenticate ---------------------------------------------
+
+    public function test_linked_id_authenticate_returns_the_socialite_user(): void
     {
-        $data = array_merge([
-            'id'     => 'linkedin-123',
-            'name'   => 'Jane Doe',
-            'email'  => 'jane@example.com',
-            'avatar' => 'https://example.com/avatar.jpg',
-        ], $overrides);
-
-        $socialiteUser = Mockery::mock(SocialiteUser::class);
-        $socialiteUser->shouldReceive('getId')->andReturn($data['id']);
-        $socialiteUser->shouldReceive('getName')->andReturn($data['name']);
-        $socialiteUser->shouldReceive('getEmail')->andReturn($data['email']);
-        $socialiteUser->shouldReceive('getAvatar')->andReturn($data['avatar']);
-
-        return $socialiteUser;
-    }
-
-    #[Test]
-    public function it_creates_a_new_user_and_profile_when_no_matching_user_exists(): void
-    {
-        $linkedInUser = $this->makeSocialiteUser([
-            'id'    => 'linkedin-999',
-            'email' => 'newuser@example.com',
-            'name'  => 'New User',
-        ]);
-
-        $result = $this->authService->signUpOrLogin($linkedInUser);
-
-        $this->assertTrue($result['is_new_user']);
-        $this->assertNotEmpty($result['token']);
-        $this->assertInstanceOf(User::class, $result['user']);
-
-        $this->assertDatabaseHas('users', [
-            'email'       => 'newuser@example.com',
-            'linkedin_id' => 'linkedin-999',
-            'name'        => 'New User',
-        ]);
-
-        $user = User::where('email', 'newuser@example.com')->firstOrFail();
-
-        $this->assertDatabaseHas('profiles', [
-            'user_id'        => $user->id,
-            'email'          => 'newuser@example.com',
-            'account_status' => 'PENDING_VALIDATION',
-        ]);
-
-        // Ensure the profile relation was eager-loaded on the returned model
-        $this->assertTrue($result['user']->relationLoaded('profile'));
-    }
-
-    #[Test]
-    public function test_logs_in_an_existing_user_matched_by_linkedin_id_without_creating_a_new_one(): void
-    {
-        $existingUser = User::factory()->create([
-            'linkedin_id' => 'linkedin-123',
-            'email'       => 'existing@example.com',
-        ]);
-
-        $linkedInUser = $this->makeSocialiteUser([
-            'id'    => 'linkedin-123',
-            'email' => 'different-email@example.com', // deliberately mismatched
-        ]);
-
-        $result = $this->authService->signUpOrLogin($linkedInUser);
-
-        $this->assertFalse($result['is_new_user']);
-        $this->assertTrue($result['user']->is($existingUser));
-
-        // No duplicate user should have been created
-        $this->assertSame(1, User::count());
-    }
-
-    #[Test]
-    public function it_logs_in_an_existing_user_matched_by_email_and_backfills_linkedin_id(): void
-    {
-        $existingUser = User::factory()->create([
-            'linkedin_id' => null,
-            'email'       => 'matched-by-email@example.com',
-        ]);
-
-        $linkedInUser = $this->makeSocialiteUser([
-            'id'    => 'linkedin-456',
-            'email' => 'matched-by-email@example.com',
-        ]);
-
-        $result = $this->authService->signUpOrLogin($linkedInUser);
-
-        $this->assertFalse($result['is_new_user']);
-        $this->assertTrue($result['user']->is($existingUser->fresh()));
-
-        $this->assertDatabaseHas('users', [
-            'id'          => $existingUser->id,
-            'linkedin_id' => 'linkedin-456',
-        ]);
-
-        $this->assertSame(1, User::count());
-    }
-
-    #[Test]
-    public function it_does_not_overwrite_an_existing_linkedin_id_when_user_already_has_one(): void
-    {
-        $existingUser = User::factory()->create([
-            'linkedin_id' => 'original-linkedin-id',
-            'email'       => 'keep-my-id@example.com',
-        ]);
-
-        $linkedInUser = $this->makeSocialiteUser([
-            'id'    => 'a-different-linkedin-id',
-            'email' => 'keep-my-id@example.com',
-        ]);
-
-        $this->authService->signUpOrLogin($linkedInUser);
-
-        $this->assertDatabaseHas('users', [
-            'id'          => $existingUser->id,
-            'linkedin_id' => 'original-linkedin-id',
-        ]);
-    }
-
-    #[Test]
-    public function it_issues_a_fresh_token_and_revokes_previous_tokens(): void
-    {
-        $existingUser = User::factory()->create([
-            'linkedin_id' => 'linkedin-123',
-        ]);
-
-        // Simulate a pre-existing token from a previous session
-        $oldToken = $existingUser->createToken('api');
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $oldToken->accessToken->id,
-        ]);
-
-        $linkedInUser = $this->makeSocialiteUser(['id' => 'linkedin-123']);
-
-        $result = $this->authService->signUpOrLogin($linkedInUser);
-
-        $this->assertNotEmpty($result['token']);
-
-        // Old token should have been revoked, only the new one should remain
-        $this->assertDatabaseMissing('personal_access_tokens', [
-            'id' => $oldToken->accessToken->id,
-        ]);
-        $this->assertSame(1, $existingUser->tokens()->count());
-    }
-
-    #[Test]
-    public function it_wraps_user_and_profile_creation_in_a_transaction_and_rolls_back_on_failure(): void
-    {
-        // Force the profile creation to fail by using an email that violates
-        // a unique constraint on the profiles table (adjust to your schema).
-        \App\Models\Profile::factory()->create([
-            'email' => 'conflict@example.com',
-        ]);
-
-        $linkedInUser = $this->makeSocialiteUser([
-            'id'    => 'linkedin-conflict',
-            'email' => 'conflict@example.com',
-        ]);
-
-        try {
-            $this->authService->signUpOrLogin($linkedInUser);
-            $this->fail('Expected an exception due to a profile creation conflict.');
-        } catch (\Throwable $e) {
-            // Expected: transaction should roll back the user creation too
-        }
-
-        $this->assertDatabaseMissing('users', [
-            'linkedin_id' => 'linkedin-conflict',
-        ]);
-    }
-
-    #[Test]
-    public function linked_id_authenticate_delegates_to_socialite_with_the_linkedin_openid_driver_in_stateless_mode(): void
-    {
-        $expectedUser = Mockery::mock(SocialiteUser::class);
+        $fakeUser = $this->fakeSocialiteUser('li-123', 'jane@example.com');
 
         $driver = Mockery::mock();
         $driver->shouldReceive('stateless')->once()->andReturnSelf();
-        $driver->shouldReceive('user')->once()->andReturn($expectedUser);
+        $driver->shouldReceive('user')->once()->andReturn($fakeUser);
 
-        Socialite::shouldReceive('driver')
-            ->once()
-            ->with('linkedin-openid')
-            ->andReturn($driver);
+        Socialite::shouldReceive('driver')->with('linkedin-openid')->once()->andReturn($driver);
 
-        $result = $this->authService->linkedIdAuthenticate();
+        $this->assertSame($fakeUser, $this->service->linkedIdAuthenticate());
+    }
 
-        $this->assertSame($expectedUser, $result);
+    // --- signUpOrLogin ------------------------------------------------------
+
+    public function test_creates_a_new_user_and_profile_when_no_match_exists(): void
+    {
+        $linkedInUser = $this->fakeSocialiteUser('li-999', 'newperson@example.com');
+
+        $result = $this->service->signUpOrLogin($linkedInUser);
+
+        $this->assertArrayHasKey('one_time_code', $result);
+        $this->assertNotEmpty($result['one_time_code']);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'newperson@example.com',
+            'linkedin_id' => 'li-999',
+        ]);
+
+        $user = User::where('email', 'newperson@example.com')->firstOrFail();
+
+        $this->assertDatabaseHas('profiles', [
+            'user_id' => $user->id,
+            'account_status' => 'PENDING_VALIDATION',
+        ]);
+
+        $cached = Cache::get("oauth_code:{$result['one_time_code']}");
+        $this->assertNotNull($cached);
+        $this->assertEquals($user->id, $cached['user_id']);
+        $this->assertNotEmpty($cached['token']);
+    }
+
+    public function test_links_linkedin_id_to_an_existing_user_matched_by_email(): void
+    {
+        $existing = User::factory()->create([
+            'email' => 'matched@example.com',
+            'linkedin_id' => null,
+        ]);
+
+        $linkedInUser = $this->fakeSocialiteUser('li-555', 'matched@example.com');
+
+        $this->service->signUpOrLogin($linkedInUser);
+
+        $this->assertSame('li-555', $existing->refresh()->linkedin_id);
+        $this->assertSame(1, User::where('email', 'matched@example.com')->count());
+    }
+
+    public function test_does_not_overwrite_linkedin_id_when_already_set(): void
+    {
+        $existing = User::factory()->create([
+            'email' => 'already@example.com',
+            'linkedin_id' => 'li-original',
+        ]);
+
+        // Same linkedin_id, different email on the socialite payload just to
+        // prove the existing record (matched by linkedin_id) is reused as-is.
+        $linkedInUser = $this->fakeSocialiteUser('li-original', 'different@example.com');
+
+        $this->service->signUpOrLogin($linkedInUser);
+
+        $this->assertSame('li-original', $existing->refresh()->linkedin_id);
+        $this->assertSame(1, User::count());
+    }
+
+    public function test_issues_a_fresh_token_and_revokes_previous_ones(): void
+    {
+        $existing = User::factory()->create([
+            'email' => 'tokened@example.com',
+            'linkedin_id' => 'li-token',
+        ]);
+        $existing->createToken('old-token');
+        $this->assertSame(1, $existing->tokens()->count());
+
+        $linkedInUser = $this->fakeSocialiteUser('li-token', 'tokened@example.com');
+
+        $this->service->signUpOrLogin($linkedInUser);
+
+        $this->assertSame(1, $existing->refresh()->tokens()->count());
+    }
+
+    // --- exchangeOneTimeCode -------------------------------------------------
+
+    public function test_exchanges_a_valid_code_for_the_user_and_token(): void
+    {
+        $user = User::factory()->has(Profile::factory())->create();
+        $token = $user->createToken('api')->plainTextToken;
+
+        Cache::put('oauth_code:abc123', [
+            'user_id' => $user->id,
+            'token' => $token,
+        ], now()->addMinutes(2));
+
+        $result = $this->service->exchangeOneTimeCode('abc123');
+
+        $this->assertSame($token, $result['token']);
+        $this->assertTrue($result['user']->is($user));
+        $this->assertTrue($result['user']->relationLoaded('profile'));
+
+        // one-time code must be consumed
+        $this->assertNull(Cache::get('oauth_code:abc123'));
+    }
+
+    public function test_throws_invalid_oauth_code_exception_when_code_is_missing_or_expired(): void
+    {
+        $this->expectException(InvalidOAuthCodeException::class);
+
+        $this->service->exchangeOneTimeCode('does-not-exist');
+    }
+
+    public function test_throws_model_not_found_when_the_cached_user_no_longer_exists(): void
+    {
+        Cache::put('oauth_code:ghost', [
+            'user_id' => 999999, // adjust to match your PK type (int/uuid)
+            'token' => 'irrelevant',
+        ], now()->addMinutes(2));
+
+        $this->expectException(ModelNotFoundException::class);
+
+        $this->service->exchangeOneTimeCode('ghost');
     }
 }

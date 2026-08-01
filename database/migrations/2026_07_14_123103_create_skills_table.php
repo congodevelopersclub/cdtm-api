@@ -11,7 +11,7 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::create('skills', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->string('slug')->unique();
             $table->timestamps();
@@ -19,8 +19,8 @@ return new class () extends Migration {
 
         Schema::create('profile_skill', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('profile_id')->constrained()->onDelete('cascade');
-            $table->foreignId('skill_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('profile_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('skill_id')->constrained()->onDelete('cascade');
             $table->unsignedTinyInteger('proficiency')->nullable();
             $table->unsignedSmallInteger('years_experience')->nullable();
             $table->timestamps();

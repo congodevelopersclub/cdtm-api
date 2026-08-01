@@ -7,6 +7,44 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
+#[OA\Schema(
+    schema: 'UpdateProfileRequest',
+    title: 'Update Profile Request',
+    description: 'Request payload for updating a user profile',
+    properties: [
+        new OA\Property(property: 'name', type: 'string', description: 'The profile name', example: 'John Doe'),
+        new OA\Property(property: 'bio', type: 'string', description: 'The profile bio', example: 'Product designer based in Lille.'),
+        new OA\Property(property: 'headline', type: 'string', description: 'The profile headline', example: 'Senior Product Designer'),
+        new OA\Property(property: 'location', type: 'string', description: 'The profile location', example: 'Lille, France'),
+        new OA\Property(
+            property: 'skills',
+            description: 'Skills linked to this profile',
+            type: 'array',
+            items: new OA\Items(
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', description: 'Skill name', example: 'Laravel'),
+                    new OA\Property(property: 'proficiency', type: 'integer', description: 'Skill proficiency level (1-5)', example: 4),
+                    new OA\Property(property: 'years_experience', type: 'integer', description: 'Years of experience with the skill', example: 3),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Property(
+            property: 'projects',
+            description: 'Projects linked to this profile',
+            type: 'array',
+            items: new OA\Items(
+                properties: [
+                    new OA\Property(property: 'id', type: ['integer','null'], description:'Project ID (nullable for new projects)', example:null),
+                    new OA\Property(property:'title', type:'string', description:'Project title', example:'Portfolio Website'),
+                    new OA\Property(property:'description', type:['string','null'], description:'Project description (nullable)', example:'A personal portfolio website built with Laravel.'),
+                    new OA\Property(property:'link', type:['string','null'], description:'Project link (nullable)', example:'https://portfolio.example.com'),
+                ],
+                type:'object'
+            )
+        ),
+    ]
+)]
 class UpdateProfileRequest extends FormRequest
 {
     /**

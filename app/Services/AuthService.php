@@ -5,13 +5,30 @@ namespace App\Services;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use App\Models\User;
+use App\Exceptions\InvalidOAuthCodeException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthService
 {
     /**
-     * @return array{user: User, token: string, is_new_user: bool}
+     * Redirect to LinkedIn and authenticate the user with LinkedIn using OAuth.
+     *
+     * @return SocialiteUser
+     */
+    public function linkedIdAuthenticate(): SocialiteUser
+    {
+        return Socialite::driver('linkedin-openid')
+            ->stateless()
+            ->user();
+    }
+
+    /**
+     * Sign up or log in a user based on the LinkedIn OAuth user data.
+     *
+     * @return array{one_time_code: string}
      */
     public function signUpOrLogin(SocialiteUser $linkedInUser): array
     {
@@ -29,19 +46,37 @@ class AuthService
         }
 
         $token = $this->issueToken($user);
+        $code = $this->generateAndCacheOneTimeCode($user->id, $token);
 
         return [
-            'user' => $user->load('profile'),
-            'token' => $token,
-            'is_new_user' => $isNewUser,
+            'one_time_code' => $code,
         ];
     }
 
-    public function linkedIdAuthenticate(): SocialiteUser
+    /**
+     * Exchange a one-time code for a user and token.
+     *
+     * @param string $code
+     * @return array{user: User, token: string}
+     * @throws InvalidOAuthCodeException
+     * @throws ModelNotFoundException
+     */
+    public function exchangeOneTimeCode(string $code): ?array
     {
-        return Socialite::driver('linkedin-openid')
-            ->stateless()
-            ->user();
+        $token_data = Cache::pull("oauth_code:{$code}");
+        if ($token_data === null || !isset($token_data['user_id'], $token_data['token'])) {
+            throw new InvalidOAuthCodeException();
+        }
+
+        $user = User::find($token_data['user_id']);
+        if ($user === null) {
+            throw new ModelNotFoundException('User not found');
+        }
+
+        return [
+            'user' => $user->load('profile'),
+            'token' => $token_data['token'],
+        ];
     }
 
     private function createUser(SocialiteUser $linkedInUser): User
@@ -59,6 +94,7 @@ class AuthService
             $user->profile()->create([
                 'name' => $user->name,
                 'email' => $user->email,
+                'linkedin_id' => $user->linkedin_id,
                 'avatar_url' => $user->avatar_url,
                 'account_status' => 'PENDING_VALIDATION',
             ]);
@@ -71,5 +107,16 @@ class AuthService
     {
         $user->tokens()->delete();
         return $user->createToken('api')->plainTextToken;
+    }
+
+    private function generateAndCacheOneTimeCode(string $user_id, string $token): string
+    {
+        $oneTimeCode = Str::random(40);
+        Cache::put("oauth_code:{$oneTimeCode}", [
+            'user_id' => $user_id,
+            'token' => $token,
+        ], now()->addMinutes(2));
+
+        return $oneTimeCode;
     }
 }

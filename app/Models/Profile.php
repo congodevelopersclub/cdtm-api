@@ -16,10 +16,11 @@ use OpenApi\Attributes as OA;
     title: 'Profile',
     description: 'A user profile model',
     properties: [
-        new OA\Property(property: 'id', type: 'integer', description: 'The profile ID'),
-        new OA\Property(property: 'user_id', type: 'integer', description: 'The associated user ID'),
+        new OA\Property(property: 'id', type: 'uuid', description: 'The profile ID', example: '123e4567-e89b-12d3-a456-426614174000'),
+        new OA\Property(property: 'user_id', type: 'uuid', description: 'The associated user ID', example: '123e4567-e89b-12d3-a456-426614174000'),
         new OA\Property(property: 'email', type: 'string', description: 'The profile email'),
         new OA\Property(property: 'name', type: 'string', description: 'The profile name'),
+        new OA\Property(property: 'linkedin_id', type: 'string', description: 'The profile LinkedIn ID'),
         new OA\Property(property: 'headline', type: 'string', description: 'The profile headline'),
         new OA\Property(property: 'bio', type: 'string', description: 'The profile bio'),
         new OA\Property(property: 'avatar_url', type: 'string', description: 'The profile avatar URL'),
@@ -42,8 +43,8 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]
 )]
-#[Fillable(['user_id', 'email', 'name', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status'])]
-class Profile extends Model
+#[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status'])]
+class Profile extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\ProfileFactory> */
     use HasFactory;

@@ -22,6 +22,7 @@ class ProfileFactory extends Factory
             'user_id' => User::factory(),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
+            'linkedin_id' => $this->faker->uuid(),
             'headline' => $this->faker->jobTitle(),
             'bio' => $this->faker->paragraph(),
             'avatar_url' => $this->faker->imageUrl(200, 200, 'people'),

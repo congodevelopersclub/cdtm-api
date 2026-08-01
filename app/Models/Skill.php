@@ -14,7 +14,7 @@ use OpenApi\Attributes as OA;
     title: "Skill",
     required: ["name"],
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "uuid", example: "123e4567-e89b-12d3-a456-426614174000"),
         new OA\Property(property: "name", type: "string", example: "Laravel"),
         new OA\Property(property: "slug", type: "string", example: "laravel"),
         new OA\Property(property: "created_at", type: "string", format: "date-time"),
@@ -23,7 +23,7 @@ use OpenApi\Attributes as OA;
 )]
 #[Fillable(['name', 'slug'])]
 #[Hidden(['created_at', 'updated_at'])]
-class Skill extends Model
+class Skill extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\SkillFactory> */
     use HasFactory;

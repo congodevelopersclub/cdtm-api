@@ -133,7 +133,7 @@ class ProfileController extends Controller
     }
 
 
-    #[OA\Put(
+    #[OA\Patch(
         path: '/api/v1/profiles/{profile}',
         operationId: 'profileUpdate',
         summary: 'Update a profile',
@@ -152,10 +152,7 @@ class ProfileController extends Controller
             required: true,
             description: 'Fields to update on the profile. TODO: replace with the actual fields from UpdateProfileRequest::rules().',
             content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'bio', type: 'string', example: 'Product designer based in Lille.'),
-                ],
-                type: 'object'
+                ref: '#/components/schemas/UpdateProfileRequest'
             )
         ),
         responses: [
