@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Category extends Model
+class Category extends BaseModel
 {
-     use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -25,16 +26,20 @@ class Category extends Model
 
     /**
      * Les développeurs appartenant à cette catégorie.
+     *
+     * @return HasMany<Profile, $this>
      */
-    public function developers()
+    public function developers(): HasMany
     {
-        return $this->hasMany(DeveloperProfile::class);
+        return $this->hasMany(Profile::class);
     }
 
     /**
      * Les projets appartenant à cette catégorie.
+     *
+     * @return HasMany<Project, $this>
      */
-    public function projects()
+    public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
     }
