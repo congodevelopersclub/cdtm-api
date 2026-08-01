@@ -21,5 +21,3 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('profiles/{profile}', [ProfileController::class, 'destroy']);
     Route::put('profiles/{profile}/validate', [ProfileController::class, 'validateProfile']);
 });
-
-
