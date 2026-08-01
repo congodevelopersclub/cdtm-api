@@ -22,9 +22,6 @@ class CategoryFactory extends Factory
             'name' => ucwords($name),
             'slug' => Str::slug($name),
             'description' => fake()->optional()->sentence(),
-            'icon' => fake()->optional()->word(),
-            'image' => fake()->optional()->imageUrl(),
-            'color' => fake()->optional()->hexColor(),
             'is_active' => true,
             'sort_order' => fake()->numberBetween(0, 100),
         ];

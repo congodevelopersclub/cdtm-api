@@ -18,11 +18,6 @@ return new class extends Migration
 
             $table->text('description')->nullable();
 
-            $table->string('icon')->nullable();
-            $table->string('image')->nullable();
-
-            $table->string('color', 20)->nullable();
-
             $table->boolean('is_active')->default(true);
 
             $table->unsignedInteger('sort_order')->default(0);
