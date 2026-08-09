@@ -29,7 +29,7 @@ class ProfileController extends Controller
                 description: 'Page number',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
             ),
         ],
         responses: [
@@ -101,7 +101,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to retrieve',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
             ),
         ],
         responses: [
@@ -145,7 +145,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to update',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -211,7 +211,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to validate',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -280,7 +280,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to delete',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         responses: [

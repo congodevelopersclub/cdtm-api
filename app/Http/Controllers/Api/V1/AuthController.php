@@ -230,7 +230,7 @@ class AuthController extends Controller
     )]
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user(), 200);
+        return response()->json($request->user()->load('profile'), 200);
     }
 
 }
