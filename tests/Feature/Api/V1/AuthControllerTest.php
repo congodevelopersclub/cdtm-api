@@ -224,7 +224,7 @@ class AuthControllerTest extends TestCase
     public function test_show_returns_404_for_a_nonexistent_user(): void
     {
         Sanctum::actingAs(User::factory()->create());
-        
+
         $response = $this->getJson(self::SHOW_URI . '/00000000-0000-0000-0000-000000000000');
 
         $response->assertStatus(404);
