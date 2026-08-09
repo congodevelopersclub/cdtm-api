@@ -42,6 +42,7 @@ jobs:
   build:
     needs: [format-code]
     runs-on: ubuntu-latest
+    environment: dev
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v4
