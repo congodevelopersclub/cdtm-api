@@ -4,6 +4,7 @@ ARG APP_USER_ID=1000
 ARG APP_GROUP_ID=1000
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    $PHPIZE_DEPS \
     git \
     unzip \
     libicu-dev \
@@ -17,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pdo_sqlite \
     pcntl \
     bcmath \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

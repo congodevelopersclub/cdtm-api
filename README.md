@@ -47,10 +47,11 @@ Run the app as usual with `php artisan serve` or your preferred local environmen
 
 ## Docker Development Environment
 
-The Docker environment runs three services:
+The Docker environment runs four services:
 
 - `app`: PHP 8.3, Composer, and the Laravel API;
 - `db`: PostgreSQL 17 with a persistent data volume;
+- `redis`: Redis with append-only persistence, ready for future cache, session, and queue usage;
 - `vite`: Node.js 22 and the Vite development server.
 
 Docker and Docker Compose are the only host dependencies required for this setup.
@@ -95,6 +96,7 @@ The `--seed` option is intended for the initial setup. Running non-idempotent se
 | Vite | <http://localhost:5173> |
 
 PostgreSQL is available to the other containers under the hostname `db` and is not exposed to the host by default.
+Redis is available to the other containers under the hostname `redis` on port `6379` and is not exposed to the host by default.
 
 ### Common commands
 
