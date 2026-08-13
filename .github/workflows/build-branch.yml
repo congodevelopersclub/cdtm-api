@@ -14,19 +14,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
           coverage: none
-
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
-
       - name: Format code
         run: composer format
-
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
@@ -42,25 +38,23 @@ jobs:
   build:
     needs: [format-code]
     runs-on: ubuntu-latest
+    environment: dev
     steps:
-      - name: Checkout release tag
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
           extensions: mbstring, intl, bcmath, sqlite3, pdo, pdo_sqlite
           coverage: none
-
       - name: Install Composer dependencies
         run: |
           composer --version
           composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
-
       - name: Create release archive
         run: |
           tar --exclude='.git' \
@@ -70,17 +64,14 @@ jobs:
               --exclude='storage/framework/sessions' \
               --exclude='storage/framework/views' \
               -czf dev-build.tar.gz . || [ $? -eq 1 ]
-
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Upload release to server
         run: |
           scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \
             dev-build.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/releases/
-
       - name: Run remote deploy script
         run: |
           ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no \

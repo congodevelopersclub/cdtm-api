@@ -866,35 +866,18 @@
                         "description": "ID of the user to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User retrieved successfully",
+                        "description": "Authenticated user retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "allOf": [
-                                                {
-                                                    "$ref": "#/components/schemas/User"
-                                                },
-                                                {
-                                                    "properties": {
-                                                        "profile": {
-                                                            "$ref": "#/components/schemas/Profile"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/User"
                                 }
                             }
                         }
