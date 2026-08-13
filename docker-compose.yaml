@@ -14,6 +14,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   db:
     image: postgres:17-alpine
@@ -27,7 +29,18 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-cdtm} -d ${DB_DATABASE:-cdtm_api}"]
       interval: 10s
       timeout: 5s
-      retries: 5  
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   vite:
     image: node:22-alpine
@@ -41,5 +54,6 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   vendor:
   node_modules:
