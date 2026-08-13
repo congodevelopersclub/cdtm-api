@@ -2,14 +2,22 @@
 
 namespace Tests\Feature\Api\V1;
 
-use App\Models\Skill;
+use App\Models\{Skill, User};
 use PHPUnit\Framework\Attributes\Test;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class SkillControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     #[Test]
     public function test_can_list_skills(): void

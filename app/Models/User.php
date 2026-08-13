@@ -30,6 +30,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'linkedin_id', type: 'string', description: 'The user LinkedIn ID'),
         new OA\Property(property: 'email_verified_at', type: 'string', format: 'date-time', description: 'The email verification timestamp'),
         new OA\Property(property: 'role', ref: '#/components/schemas/UserRole'),
+        new OA\Property(property: 'profile', nullable: true, description: 'The user profile', ref: '#/components/schemas/Profile'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]

@@ -6,6 +6,7 @@ Thanks for contributing! This document explains how to set up the project, the w
 
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
+- [Docker Development Environment](#docker-development-environment)
 - [Branching Model](#branching-model)
 - [Commit Message Convention](#commit-message-convention)
 - [Code Style — PHP CS Fixer](#code-style--php-cs-fixer)
@@ -25,10 +26,12 @@ Thanks for contributing! This document explains how to set up the project, the w
 - Node.js + npm (only needed for `semantic-release`)
 - A local database (MySQL/PostgreSQL/SQLite — see `.env.example`)
 
+Alternatively, install only Docker Engine and Docker Compose to use the containerized development environment described below.
+
 ## Getting Started
 
 ```bash
-git clone git@https://github.com/congodevelopersclub/cdtm-api.git
+git clone git@github.com:congodevelopersclub/cdtm-api.git
 cd cdtm-api
 
 composer install
@@ -39,6 +42,103 @@ php artisan migrate --seed
 ```
 
 Run the app as usual with `php artisan serve` or your preferred local environment (Sail, Valet, Docker, etc.).
+
+---
+
+## Docker Development Environment
+
+The Docker environment runs three services:
+
+- `app`: PHP 8.3, Composer, and the Laravel API;
+- `db`: PostgreSQL 17 with a persistent data volume;
+- `vite`: Node.js 22 and the Vite development server.
+
+Docker and Docker Compose are the only host dependencies required for this setup.
+
+### First startup
+
+Copy the example environment file and update any local values you need:
+
+```bash
+cp .env.example .env
+```
+
+On Linux, set `APP_USER_ID` and `APP_GROUP_ID` in `.env` to the values returned by:
+
+```bash
+id -u
+id -g
+```
+
+Build and start the services:
+
+```bash
+docker compose up -d --build
+```
+
+Generate the application key and initialize the database:
+
+```bash
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+```
+
+The `--seed` option is intended for the initial setup. Running non-idempotent seeders repeatedly may cause duplicate-data errors.
+
+### Local URLs
+
+| Service | URL |
+| --- | --- |
+| Laravel API | <http://localhost:8000> |
+| Health check | <http://localhost:8000/up> |
+| Swagger UI | <http://localhost:8000/api/documentation> |
+| Vite | <http://localhost:5173> |
+
+PostgreSQL is available to the other containers under the hostname `db` and is not exposed to the host by default.
+
+### Common commands
+
+```bash
+# Show service status
+docker compose ps
+
+# Follow all service logs
+docker compose logs -f
+
+# Install PHP dependencies
+docker compose exec app composer install
+
+# Run pending database migrations
+docker compose exec app php artisan migrate
+
+# Run the test suite (SQLite in memory)
+docker compose exec app php artisan test
+
+# Run static analysis
+docker compose exec app vendor/bin/phpstan analyse
+
+# Format PHP code
+docker compose exec app composer format
+
+# Open a shell in the Laravel container
+docker compose exec app bash
+```
+
+### Stopping and resetting
+
+Stop the containers while preserving the database and dependency volumes:
+
+```bash
+docker compose down
+```
+
+To also delete all Docker volumes, including the PostgreSQL data, use:
+
+```bash
+docker compose down --volumes
+```
+
+The second command permanently removes the local containerized database and should be used with care.
 
 ---
 

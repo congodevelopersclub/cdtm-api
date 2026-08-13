@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ForceJsonResponse::class);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
@@ -44,11 +46,12 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Unauthenticated.',
-                ], 401);
-            }
+            // if ($request->is('api/*') || $request->expectsJson()) {
+
+            // }
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
         });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
