@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\ProfileResource;
 use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
 use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
@@ -18,10 +19,11 @@ class ProfileController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/profiles',
+        path: '/v1/profiles',
         operationId: 'profileIndex',
         summary: 'List profiles',
         description: 'Returns a paginated list of profiles, including their skills and projects.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -29,7 +31,7 @@ class ProfileController extends Controller
                 description: 'Page number',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
+                schema: new OA\Schema(type: 'integer', example: 1)
             ),
         ],
         responses: [
@@ -53,18 +55,20 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function index(): JsonResponse
+    public function index(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $posts = Profile::with(['skills', 'projects'])->paginate(20);
-        return response()->json($posts, 200);
+        $profiles = Profile::with(['skills', 'projects'])->paginate(20);
+        return ProfileResource::collection($profiles);
     }
 
 
+
     #[OA\Post(
-        path: '/api/v1/profiles',
+        path: '/v1/profiles',
         operationId: 'profileStore',
         summary: 'Create a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         responses: [
             new OA\Response(
@@ -90,10 +94,11 @@ class ProfileController extends Controller
 
 
     #[OA\Get(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileShow',
         summary: 'Get a single profile',
         description: 'Returns a profile (route-model-bound by ID) along with its skills and projects.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -101,7 +106,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to retrieve',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '00000000-0000-0000-0000-000000000000')
             ),
         ],
         responses: [
@@ -127,17 +132,18 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function show(Profile $profile): JsonResponse
+    public function show(Profile $profile): ProfileResource
     {
-        return response()->json(['data' => $profile->load(['skills', 'projects'])], 200);
+        return new ProfileResource($profile->load(['skills', 'projects']));
     }
 
 
     #[OA\Patch(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileUpdate',
         summary: 'Update a profile',
         description: 'Validates the request via UpdateProfileRequest and updates the given profile.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -145,7 +151,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to update',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -199,11 +205,12 @@ class ProfileController extends Controller
     }
 
 
-    #[OA\Post(
-        path: '/api/v1/profiles/{profile}/validate',
+    #[OA\Put(
+        path: '/v1/profiles/{profile}/validate',
         operationId: 'profileValidate',
         summary: 'Validate a profile',
         description: 'Validates the request via ValidateProfileRequest and runs profile validation logic (e.g. moderation/completeness check).',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -211,7 +218,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to validate',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -269,10 +276,11 @@ class ProfileController extends Controller
 
 
     #[OA\Delete(
-        path: '/api/v1/profiles/{profile}',
+        path: '/v1/profiles/{profile}',
         operationId: 'profileDestroy',
         summary: 'Delete a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -280,7 +288,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to delete',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         responses: [

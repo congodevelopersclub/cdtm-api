@@ -83,6 +83,7 @@ jobs:
           thresholds: "80 90"
       - name: Post coverage comment on PR
         if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true

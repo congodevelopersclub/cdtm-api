@@ -12,7 +12,7 @@
         }
     ],
     "paths": {
-        "/api/v1/auth": {
+        "/v1/auth": {
             "get": {
                 "tags": [
                     "Auth"
@@ -27,7 +27,7 @@
                 }
             }
         },
-        "/api/v1/auth/sign-up": {
+        "/v1/auth/sign-up": {
             "get": {
                 "tags": [
                     "Auth"
@@ -125,7 +125,7 @@
                 }
             }
         },
-        "/api/v1/auth/exchange-code": {
+        "/v1/auth/exchange-code": {
             "post": {
                 "tags": [
                     "Auth"
@@ -228,13 +228,13 @@
                 }
             }
         },
-        "/api/v1/me": {
+        "/v1/me": {
             "get": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Get the authenticated user",
-                "operationId": "13b43df400e475a157538f73617b8c3d",
+                "operationId": "6d7a19d26b6caf6a1a4b6fc027ce6259",
                 "responses": {
                     "200": {
                         "description": "Authenticated user retrieved successfully",
@@ -262,10 +262,15 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/v1/profiles": {
+        "/v1/profiles": {
             "get": {
                 "tags": [
                     "Profile"
@@ -320,7 +325,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -350,10 +360,15 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/v1/profiles/{profile}": {
+        "/v1/profiles/{profile}": {
             "get": {
                 "tags": [
                     "Profile"
@@ -368,8 +383,9 @@
                         "description": "ID of the profile to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -405,7 +421,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -421,8 +442,9 @@
                         "description": "ID of the profile to delete",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -447,7 +469,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "patch": {
                 "tags": [
@@ -463,8 +490,9 @@
                         "description": "ID of the profile to update",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -530,11 +558,16 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/v1/profiles/{profile}/validate": {
-            "post": {
+        "/v1/profiles/{profile}/validate": {
+            "put": {
                 "tags": [
                     "Profile"
                 ],
@@ -548,8 +581,9 @@
                         "description": "ID of the profile to validate",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -621,16 +655,21 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/skills": {
+        "/v1/skills": {
             "get": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "List all skills",
-                "operationId": "d6396076c036a31691bc99282387f12a",
+                "operationId": "b6cfc29491b59d0a6a5e2b8909b39321",
                 "parameters": [
                     {
                         "name": "page",
@@ -665,14 +704,19 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "Create a new skill",
-                "operationId": "a8068d5934bbdce5b106290c947357bb",
+                "operationId": "3c4151b695f8d3745854b20134442e93",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -711,23 +755,30 @@
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/skills/{id}": {
+        "/v1/skills/{id}": {
             "get": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "Get a single skill",
-                "operationId": "d3cd4a49c570ea0205a12163e7ce589d",
+                "operationId": "e664490c400f91146fbbbbae843e5268",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -750,21 +801,28 @@
                     "404": {
                         "description": "Skill not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "Update a skill",
-                "operationId": "2174910c895206bb610d6a822a0571ee",
+                "operationId": "3ecb483966b4c14150dc382d5791308b",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -823,21 +881,28 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
                     "Skills"
                 ],
                 "summary": "Delete a skill",
-                "operationId": "8f01e3e7bb526bf4938d4e1d8d5285fb",
+                "operationId": "eef67dad50e76bb4020ed0859e83ac09",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -848,10 +913,15 @@
                     "404": {
                         "description": "Skill not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/v1/users/{user}": {
+        "/v1/users/{user}": {
             "get": {
                 "tags": [
                     "Users"
@@ -866,7 +936,8 @@
                         "description": "ID of the user to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "uuid",
+                            "type": "string",
+                            "format": "uuid",
                             "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
@@ -902,7 +973,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -1234,6 +1310,15 @@
                     },
                     "role": {
                         "$ref": "#/components/schemas/UserRole"
+                    },
+                    "profile": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Profile"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "The user profile"
                     },
                     "created_at": {
                         "description": "The creation timestamp",
