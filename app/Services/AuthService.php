@@ -8,11 +8,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use App\Models\User;
+use App\Services\MailService;
 use App\Exceptions\InvalidOAuthCodeException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthService
 {
+    public function __construct(
+        protected MailService $mailService
+    ) {}
     /**
      * Redirect to LinkedIn and authenticate the user with LinkedIn using OAuth.
      *
@@ -98,6 +102,8 @@ class AuthService
                 'avatar_url' => $user->avatar_url,
                 'account_status' => 'PENDING_VALIDATION',
             ]);
+
+            $this->mailService->sendWelcomeEmail($user);
 
             return $user;
         });
