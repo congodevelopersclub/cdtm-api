@@ -11,11 +11,19 @@ class ProfileControllerTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    private User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->create();
+    }
+
     public function test_can_list_profiles(): void
     {
         Profile::factory()->count(3)->create();
 
-        $response = $this->getJson('/api/v1/profiles');
+        $response = $this->actingAs($this->user)->getJson('/api/v1/profiles');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -29,7 +37,7 @@ class ProfileControllerTest extends TestCase
     {
         $profile = Profile::factory()->create();
 
-        $response = $this->getJson("/api/v1/profiles/{$profile->id}");
+        $response = $this->actingAs($this->user)->getJson("/api/v1/profiles/{$profile->id}");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.id', $profile->id);
@@ -37,20 +45,20 @@ class ProfileControllerTest extends TestCase
 
     public function test_store_returns_not_implemented(): void
     {
-        $this->postJson('/api/v1/profiles')->assertStatus(501);
+        $this->actingAs($this->user)->postJson('/api/v1/profiles')->assertStatus(501);
     }
 
     public function test_destroy_returns_not_implemented(): void
     {
         $profile = Profile::factory()->create();
-        $this->deleteJson("/api/v1/profiles/{$profile->id}")->assertStatus(501);
+        $this->actingAs($this->user)->deleteJson("/api/v1/profiles/{$profile->id}")->assertStatus(501);
     }
 
     public function test_can_update_profile(): void
     {
         $profile = Profile::factory()->create();
 
-        $response = $this->putJson("/api/v1/profiles/{$profile->id}", [
+        $response = $this->actingAs($this->user)->patchJson("/api/v1/profiles/{$profile->id}", [
             'name' => 'John Updated',
         ]);
 
@@ -61,7 +69,7 @@ class ProfileControllerTest extends TestCase
     {
         $profile = Profile::factory()->create();
 
-        $response = $this->putJson("/api/v1/profiles/{$profile->id}/validate", [
+        $response = $this->actingAs($this->user)->putJson("/api/v1/profiles/{$profile->id}/validate", [
             'account_status' => \App\Enums\ProfileAccountStatus::VALIDATED->value,
         ]);
 
