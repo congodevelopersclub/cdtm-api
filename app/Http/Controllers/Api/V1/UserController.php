@@ -11,10 +11,11 @@ use OpenApi\Attributes as OA;
 class UserController extends Controller
 {
     #[OA\Get(
-        path: '/api/v1/users/{user}',
+        path: '/v1/users/{user}',
         operationId: 'getUserById',
         summary: 'Get a single user with their profile',
         description: 'Returns a user (route-model-bound by ID) along with their related profile.',
+        security: [['bearerAuth' => []]],
         tags: ['Users'],
         parameters: [
             new OA\Parameter(
@@ -22,7 +23,7 @@ class UserController extends Controller
                 description: 'ID of the user to retrieve',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         responses: [

@@ -12,7 +12,7 @@
         }
     ],
     "paths": {
-        "/api/v1/auth": {
+        "/v1/auth": {
             "get": {
                 "tags": [
                     "Auth"
@@ -27,7 +27,7 @@
                 }
             }
         },
-        "/api/v1/auth/sign-up": {
+        "/v1/auth/sign-up": {
             "get": {
                 "tags": [
                     "Auth"
@@ -125,7 +125,7 @@
                 }
             }
         },
-        "/api/v1/auth/exchange-code": {
+        "/v1/auth/exchange-code": {
             "post": {
                 "tags": [
                     "Auth"
@@ -228,13 +228,13 @@
                 }
             }
         },
-        "/api/v1/me": {
+        "/v1/me": {
             "get": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "Get the authenticated user",
-                "operationId": "13b43df400e475a157538f73617b8c3d",
+                "operationId": "6d7a19d26b6caf6a1a4b6fc027ce6259",
                 "responses": {
                     "200": {
                         "description": "Authenticated user retrieved successfully",
@@ -262,7 +262,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/profiles": {
@@ -320,7 +325,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -350,7 +360,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/profiles/{profile}": {
@@ -368,8 +383,9 @@
                         "description": "ID of the profile to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -405,7 +421,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -421,8 +442,9 @@
                         "description": "ID of the profile to delete",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -447,7 +469,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "patch": {
                 "tags": [
@@ -463,8 +490,9 @@
                         "description": "ID of the profile to update",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -530,11 +558,16 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/profiles/{profile}/validate": {
-            "post": {
+            "put": {
                 "tags": [
                     "Profile"
                 ],
@@ -548,8 +581,9 @@
                         "description": "ID of the profile to validate",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
                 ],
@@ -621,7 +655,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/skills": {
@@ -665,7 +704,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -711,7 +755,12 @@
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/v1/skills/{id}": {
@@ -727,7 +776,9 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -750,7 +801,12 @@
                     "404": {
                         "description": "Skill not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "put": {
                 "tags": [
@@ -764,7 +820,9 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -823,7 +881,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -837,7 +900,9 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "00000000-0000-0000-0000-000000000000"
                         }
                     }
                 ],
@@ -848,10 +913,15 @@
                     "404": {
                         "description": "Skill not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/v1/users/{user}": {
+        "/v1/users/{user}": {
             "get": {
                 "tags": [
                     "Users"
@@ -866,7 +936,8 @@
                         "description": "ID of the user to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "uuid",
+                            "type": "string",
+                            "format": "uuid",
                             "example": "123e4567-e89b-12d3-a456-426614174000"
                         }
                     }
@@ -902,7 +973,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -1234,6 +1310,15 @@
                     },
                     "role": {
                         "$ref": "#/components/schemas/UserRole"
+                    },
+                    "profile": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Profile"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "The user profile"
                     },
                     "created_at": {
                         "description": "The creation timestamp",

@@ -15,6 +15,7 @@ class SkillController extends Controller
     #[OA\Get(
         path: "/v1/skills",
         summary: "List all skills",
+        security: [['bearerAuth' => []]],
         tags: ["Skills"],
         parameters: [
             new OA\Parameter(name: "page", in: "query", schema: new OA\Schema(type: "integer")),
@@ -46,6 +47,7 @@ class SkillController extends Controller
     #[OA\Post(
         path: "/v1/skills",
         summary: "Create a new skill",
+        security: [['bearerAuth' => []]],
         tags: ["Skills"],
         requestBody: new OA\RequestBody(
             required: true,
@@ -85,9 +87,10 @@ class SkillController extends Controller
     #[OA\Get(
         path: "/v1/skills/{id}",
         summary: "Get a single skill",
+        security: [['bearerAuth' => []]],
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "string", format: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         responses: [
             new OA\Response(
@@ -111,9 +114,10 @@ class SkillController extends Controller
     #[OA\Put(
         path: "/v1/skills/{id}",
         summary: "Update a skill",
+        security: [['bearerAuth' => []]],
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "string", format: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -161,9 +165,10 @@ class SkillController extends Controller
     #[OA\Delete(
         path: "/v1/skills/{id}",
         summary: "Delete a skill",
+        security: [['bearerAuth' => []]],
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "string", format: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         responses: [
             new OA\Response(response: 204, description: "Skill deleted successfully"),

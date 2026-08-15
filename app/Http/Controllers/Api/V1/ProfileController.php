@@ -23,6 +23,7 @@ class ProfileController extends Controller
         operationId: 'profileIndex',
         summary: 'List profiles',
         description: 'Returns a paginated list of profiles, including their skills and projects.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -30,7 +31,7 @@ class ProfileController extends Controller
                 description: 'Page number',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
+                schema: new OA\Schema(type: 'integer', example: 1)
             ),
         ],
         responses: [
@@ -67,6 +68,7 @@ class ProfileController extends Controller
         operationId: 'profileStore',
         summary: 'Create a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         responses: [
             new OA\Response(
@@ -96,6 +98,7 @@ class ProfileController extends Controller
         operationId: 'profileShow',
         summary: 'Get a single profile',
         description: 'Returns a profile (route-model-bound by ID) along with its skills and projects.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -103,7 +106,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to retrieve',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '00000000-0000-0000-0000-000000000000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '00000000-0000-0000-0000-000000000000')
             ),
         ],
         responses: [
@@ -140,6 +143,7 @@ class ProfileController extends Controller
         operationId: 'profileUpdate',
         summary: 'Update a profile',
         description: 'Validates the request via UpdateProfileRequest and updates the given profile.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -147,7 +151,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to update',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -201,11 +205,12 @@ class ProfileController extends Controller
     }
 
 
-    #[OA\Post(
+    #[OA\Put(
         path: '/v1/profiles/{profile}/validate',
         operationId: 'profileValidate',
         summary: 'Validate a profile',
         description: 'Validates the request via ValidateProfileRequest and runs profile validation logic (e.g. moderation/completeness check).',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -213,7 +218,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to validate',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -275,6 +280,7 @@ class ProfileController extends Controller
         operationId: 'profileDestroy',
         summary: 'Delete a profile',
         description: 'Not implemented yet — currently always returns a 501 response.',
+        security: [['bearerAuth' => []]],
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -282,7 +288,7 @@ class ProfileController extends Controller
                 description: 'ID of the profile to delete',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+                schema: new OA\Schema(type: 'string', format: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         responses: [

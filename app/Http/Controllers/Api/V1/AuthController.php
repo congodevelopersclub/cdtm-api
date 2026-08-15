@@ -21,7 +21,7 @@ class AuthController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/auth',
+        path: '/v1/auth',
         operationId: 'authRedirect',
         summary: 'Redirect the user to LinkedIn for authentication',
         description: 'Redirects the user to LinkedIn for OAuth authentication.',
@@ -41,7 +41,7 @@ class AuthController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/auth/sign-up',
+        path: '/v1/auth/sign-up',
         operationId: 'authSignUp',
         summary: 'Sign up or log in a user via LinkedIn OAuth',
         description: 'Authenticates the user against LinkedIn, then either creates a new account or logs the user in if one already exists. Returns 201 if a new account was created, 200 if an existing user logged in.',
@@ -135,7 +135,7 @@ class AuthController extends Controller
     }
 
     #[OA\Post(
-        path: '/api/v1/auth/exchange-code',
+        path: '/v1/auth/exchange-code',
         operationId: 'authExchangeCode',
         summary: 'Exchange a one-time code for a user and token',
         description: 'Exchanges a one-time code obtained from LinkedIn OAuth for a user and token.',
@@ -205,8 +205,9 @@ class AuthController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/v1/me',
+        path: '/v1/me',
         summary: 'Get the authenticated user',
+        security: [['bearerAuth' => []]],
         tags: ['Auth'],
         responses: [
             new OA\Response(
