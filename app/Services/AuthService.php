@@ -16,7 +16,8 @@ class AuthService
 {
     public function __construct(
         protected MailService $mailService
-    ) {}
+    ) {
+    }
     /**
      * Redirect to LinkedIn and authenticate the user with LinkedIn using OAuth.
      *
