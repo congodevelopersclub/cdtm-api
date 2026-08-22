@@ -54,11 +54,21 @@ class CategoryTest extends TestCase
     }
 
     #[Test]
-    public function test_developers_relation(): void
+    public function test_profile_belongs_to_category(): void
+    {
+        $category = Category::factory()->create();
+        $profile = Profile::factory()->create(['category_id' => $category->id]);
+
+        $this->assertTrue($profile->category->is($category));
+        $this->assertTrue($category->profiles->contains($profile));
+    }
+
+    #[Test]
+    public function test_profiles_relation(): void
     {
         $category = Category::factory()->create();
 
-        $relation = $category->developers();
+        $relation = $category->profiles();
 
         $this->assertInstanceOf(HasMany::class, $relation);
         $this->assertSame(Profile::class, $relation->getRelated()::class);

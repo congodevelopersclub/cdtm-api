@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\V1\{SkillController, ProfileController, UserController, AuthController};
+use App\Http\Controllers\Api\V1\{SkillController, ProfileController, UserController, AuthController, CategoryController};
 use Illuminate\Support\Facades\Route;
 
 Route::get('auth', [AuthController::class, 'redirect'])->name('auth.index');
@@ -20,4 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
     Route::apiResource('skills', SkillController::class);
+
+    Route::apiResource('categories', CategoryController::class);
 });
