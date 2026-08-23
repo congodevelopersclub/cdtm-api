@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Api\V1;
 
-use App\Enums\ProfileAccountStatus;
-use App\Models\Category;
-use App\Models\Profile;
-use App\Models\User;
+use App\Enums\{ ProfileAccountStatus, UserRole };
+use App\Models\{ Category, Profile, User };
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,7 +20,6 @@ class ProfileControllerTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
-    #[Test]
     public function test_can_list_profiles(): void
     {
         Profile::factory()->count(2)->create();
@@ -38,7 +35,6 @@ class ProfileControllerTest extends TestCase
             ]);
     }
 
-    #[Test]
     public function test_can_show_profile_with_relations(): void
     {
         $category = Category::factory()->create();
@@ -51,7 +47,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonPath('data.category.id', $category->id);
     }
 
-    #[Test]
     public function test_show_returns_404_for_missing_profile(): void
     {
         $response = $this->getJson('/api/v1/profiles/00000000-0000-0000-0000-000000000000');
@@ -59,7 +54,6 @@ class ProfileControllerTest extends TestCase
         $response->assertNotFound();
     }
 
-    #[Test]
     public function test_can_update_profile(): void
     {
         $category = Category::factory()->create();
@@ -77,7 +71,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonPath('data.category_id', $category->id);
     }
 
-    #[Test]
     public function test_update_profile_requires_name(): void
     {
         $profile = Profile::factory()->create();
@@ -90,7 +83,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonValidationErrors(['name']);
     }
 
-    #[Test]
     public function test_can_validate_profile(): void
     {
         $profile = Profile::factory()->create([
@@ -105,7 +97,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonPath('data.account_status', ProfileAccountStatus::VALIDATED->value);
     }
 
-    #[Test]
     public function test_validate_profile_requires_account_status(): void
     {
         $profile = Profile::factory()->create();
@@ -116,7 +107,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonValidationErrors(['account_status']);
     }
 
-    #[Test]
     public function test_store_returns_not_implemented(): void
     {
         $response = $this->postJson('/api/v1/profiles', []);
@@ -125,7 +115,6 @@ class ProfileControllerTest extends TestCase
             ->assertJsonPath('code', 'NOT_IMPLEMENTED');
     }
 
-    #[Test]
     public function test_destroy_returns_not_implemented(): void
     {
         $profile = Profile::factory()->create();
@@ -134,5 +123,17 @@ class ProfileControllerTest extends TestCase
 
         $response->assertStatus(501)
             ->assertJsonPath('code', 'NOT_IMPLEMENTED');
+    }
+
+    public function test_update_profile_updates_allowed_fields(): void
+    {
+        $user = User::factory()->has(Profile::factory())->create(['role' => UserRole::Admin]);
+        $profile = $user->profile;
+
+        $response = $this->actingAs($user)->patchJson("/api/v1/profiles/{$profile->id}", [
+            'name' => 'New Name',
+        ]);
+
+        $response->assertStatus(200);
     }
 }
