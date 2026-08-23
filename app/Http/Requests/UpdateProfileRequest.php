@@ -17,6 +17,13 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'headline', type: 'string', description: 'The profile headline', example: 'Senior Product Designer'),
         new OA\Property(property: 'location', type: 'string', description: 'The profile location', example: 'Lille, France'),
         new OA\Property(
+            property: 'category_id',
+            type: 'integer',
+            nullable: true,
+            description: 'ID of the category to assign to this profile',
+            example: 1
+        ),
+        new OA\Property(
             property: 'skills',
             description: 'Skills linked to this profile',
             type: 'array',
@@ -67,6 +74,7 @@ class UpdateProfileRequest extends FormRequest
             'bio' => ['nullable', 'string', 'max:2000'],
             'headline' => ['nullable', 'string', 'max:2000'],
             'location' => ['nullable', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
 
            // Skills
             'skills' => ['sometimes', 'array'],

@@ -21,7 +21,7 @@ class ProfileController extends Controller
         path: '/api/v1/profiles',
         operationId: 'profileIndex',
         summary: 'List profiles',
-        description: 'Returns a paginated list of profiles, including their skills and projects.',
+        description: 'Returns a paginated list of profiles, including their skills, projects and category.',
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -55,7 +55,7 @@ class ProfileController extends Controller
     )]
     public function index(): JsonResponse
     {
-        $posts = Profile::with(['skills', 'projects'])->paginate(20);
+        $posts = Profile::with(['skills', 'projects', 'category'])->paginate(20);
         return response()->json($posts, 200);
     }
 
@@ -93,7 +93,7 @@ class ProfileController extends Controller
         path: '/api/v1/profiles/{profile}',
         operationId: 'profileShow',
         summary: 'Get a single profile',
-        description: 'Returns a profile (route-model-bound by ID) along with its skills and projects.',
+        description: 'Returns a profile (route-model-bound by ID) along with its skills, projects and category.',
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -129,7 +129,7 @@ class ProfileController extends Controller
     )]
     public function show(Profile $profile): JsonResponse
     {
-        return response()->json(['data' => $profile->load(['skills', 'projects'])], 200);
+        return response()->json(['data' => $profile->load(['skills', 'projects', 'category'])], 200);
     }
 
 
