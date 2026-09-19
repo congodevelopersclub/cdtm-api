@@ -1,7 +1,7 @@
 <x-mail::message>
 # Bienvenue, {{ $name }} !
 
-Merci de vous être inscrit sur la plateforme CDTM. Nous sommes ravis de vous compter parmi nous.
+Merci de vous être inscrit sur la plateforme Congo developers talent marketplace. Nous sommes ravis de vous compter parmi nous.
 
 <x-mail::button :url="config('services.frontend_url')">
 Accéder à mon espace
