@@ -16,7 +16,9 @@ use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService) {}
+    public function __construct(private AuthService $authService)
+    {
+    }
 
     #[OA\Get(
         path: '/api/v1/auth',
