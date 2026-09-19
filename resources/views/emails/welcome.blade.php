@@ -1,12 +1,29 @@
 <x-mail::message>
-# Bienvenue, {{ $name }} !
+# Bienvenue, {{ $name }} ! 🎉
 
-Merci de vous être inscrit sur la plateforme Congo developers talent marketplace. Nous sommes ravis de vous compter parmi nous.
+Merci de vous être inscrit(e) sur **Congo Developers Talent Marketplace**.
+
+Vous faites désormais partie d'une communauté de développeurs congolais talentueux, connectés à des opportunités professionnelles à fort potentiel.
 
 <x-mail::button :url="config('services.frontend_url')">
-Accéder à mon espace
+Compléter mon profil
 </x-mail::button>
 
-Cordialement,<br>
-L'équipe {{ config('app.name') }}
+## Prochaines étapes
+
+1. **Complétez votre profil** pour mettre en valeur vos compétences
+2. **Explorez** les opportunités disponibles
+3. **Connectez-vous** avec la communauté
+
+## Suivez-nous
+
+- [LinkedIn](https://www.linkedin.com/company/congo-developers-club/)
+- [GitHub](https://github.com/congodevelopersclub)
+
+<x-mail::panel>
+Une question ? Écrivez-nous à [hello@congodevelopers.club](mailto:hello@congodevelopers.club)
+</x-mail::panel>
+
+À très bientôt,  
+L'équipe Congo Developers Club
 </x-mail::message>

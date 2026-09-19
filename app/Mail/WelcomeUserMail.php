@@ -24,7 +24,7 @@ class WelcomeUserMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bienvenue sur CDTM',
+            subject: 'Bienvenue sur Congo Developers Talent Marketplace',
         );
     }
 
