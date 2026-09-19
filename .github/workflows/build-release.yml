@@ -28,7 +28,7 @@ jobs:
       - name: Install Composer dependencies
         run: |
           composer --version
-          composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
+          composer install --no-interaction --prefer-dist --no-progress
 
       - name: Create release archive
         run: |
@@ -38,7 +38,6 @@ jobs:
               --exclude='storage/framework/cache' \
               --exclude='storage/framework/sessions' \
               --exclude='storage/framework/views' \
-              --exclude='storage/api-docs' \
               -czf cdtm-api-${{ github.event.release.tag_name }}.tar.gz . || [ $? -eq 1 ]
 
       - name: Add SSH key
