@@ -24,6 +24,7 @@ php "$RELEASE_DIR/artisan" config:cache
 php "$RELEASE_DIR/artisan" route:cache
 php "$RELEASE_DIR/artisan" view:cache
 php "$RELEASE_DIR/artisan" event:cache
+php "$RELEASE_DIR/artisan" queue:restart
 
 echo "==> Granting permission on database file"
 chown "www-data:www-data" "$RELEASE_DIR/database"
