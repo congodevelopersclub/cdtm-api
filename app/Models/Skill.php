@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Attributes\{Fillable, Hidden};
+use Illuminate\Database\Eloquent\Attributes\{Fillable, Hidden, ObservedBy};
+use App\Observers\SkillObserver;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
@@ -23,6 +24,7 @@ use OpenApi\Attributes as OA;
 )]
 #[Fillable(['name', 'slug'])]
 #[Hidden(['created_at', 'updated_at'])]
+#[ObservedBy(SkillObserver::class)]
 class Skill extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\SkillFactory> */

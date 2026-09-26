@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\ProfileObserver;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
@@ -57,6 +59,7 @@ use OpenApi\Attributes as OA;
     ]
 )]
 #[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status', 'category_id'])]
+#[ObservedBy(ProfileObserver::class)]
 class Profile extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\ProfileFactory> */
