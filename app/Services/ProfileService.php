@@ -3,11 +3,52 @@
 namespace App\Services;
 
 use App\Models\{Profile, Skill, Project};
+use App\Services\Cache\CacheService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProfileService
 {
+    public function __construct(private readonly ?CacheService $cache = null)
+    {
+    }
+
+    /**
+     * @return array{data: array<int, array<string, mixed>>, total: int, per_page: int, current_page: int}
+     */
+    public function list(int $page): array
+    {
+        $load = function () use ($page) {
+            $paginated = Profile::with(['skills', 'projects', 'category'])
+                ->paginate(20, ['*'], 'page', $page)
+                ->toArray();
+
+            return [
+                'data' => $paginated['data'],
+                'total' => $paginated['total'],
+                'per_page' => $paginated['per_page'],
+                'current_page' => $paginated['current_page'],
+            ];
+        };
+
+        $result = $this->cache()->remember('profiles', "index:page={$page}", $load);
+
+        return isset($result['data'], $result['total'], $result['per_page'], $result['current_page']) ? $result : $load();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function show(Profile $profile): array
+    {
+        // Not $profile itself: it was bound before the lookup and may predate a write.
+        $load = fn () => Profile::with(['skills', 'projects', 'category'])->findOrFail($profile->id)->toArray();
+
+        $result = $this->cache()->remember('profiles', "show:{$profile->id}", $load);
+
+        return ($result['id'] ?? null) === $profile->id ? $result : $load();
+    }
+
     /**
      * @param Profile $profile
      * @param array<string, mixed> $validatedData
@@ -28,6 +69,9 @@ class ProfileService
                 $this->syncProjects($profile, $validatedData['projects']);
             }
         });
+
+        // The pivot sync() and the project query-builder writes fire no model events.
+        $this->cache()->invalidate('profiles');
 
         return $profile->load(['skills', 'projects', 'category']);
     }
@@ -96,6 +140,11 @@ class ProfileService
                 $profile->projects()->create($attributes);
             }
         }
+    }
+
+    private function cache(): CacheService
+    {
+        return $this->cache ?? CacheService::make();
     }
 
 }
