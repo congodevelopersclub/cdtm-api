@@ -7,6 +7,7 @@ use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
 use OpenApi\Attributes as OA;
@@ -55,8 +56,18 @@ class ProfileController extends Controller
     )]
     public function index(): JsonResponse
     {
-        $posts = Profile::with(['skills', 'projects', 'category'])->paginate(20);
-        return response()->json($posts, 200);
+        $result = $this->profileService->list(LengthAwarePaginator::resolveCurrentPage());
+
+        $paginator = new LengthAwarePaginator(
+            $result['data'],
+            $result['total'],
+            $result['per_page'],
+            $result['current_page'],
+            // Only Builder::paginate() resolves the path; a hand-built paginator defaults to "/".
+            ['path' => LengthAwarePaginator::resolveCurrentPath()],
+        );
+
+        return response()->json($paginator, 200);
     }
 
 
@@ -129,7 +140,7 @@ class ProfileController extends Controller
     )]
     public function show(Profile $profile): JsonResponse
     {
-        return response()->json(['data' => $profile->load(['skills', 'projects', 'category'])], 200);
+        return response()->json(['data' => $this->profileService->show($profile)], 200);
     }
 
 
