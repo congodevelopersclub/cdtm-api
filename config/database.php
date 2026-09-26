@@ -3,6 +3,10 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// 0 (also what an empty or non-numeric value casts to) makes phpredis wait forever.
+$redisTimeout = (float) env('REDIS_TIMEOUT', 1.0);
+$redisReadTimeout = (float) env('REDIS_READ_TIMEOUT', 2.0);
+
 return [
 
     /*
@@ -160,6 +164,9 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
+            // phpredis defaults both to 0 (wait forever), so a stalled Redis would never throw.
+            'timeout' => $redisTimeout > 0 ? $redisTimeout : 1.0,
+            'read_timeout' => $redisReadTimeout > 0 ? $redisReadTimeout : 2.0,
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
@@ -173,6 +180,8 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
+            'timeout' => $redisTimeout > 0 ? $redisTimeout : 1.0,
+            'read_timeout' => $redisReadTimeout > 0 ? $redisReadTimeout : 2.0,
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
