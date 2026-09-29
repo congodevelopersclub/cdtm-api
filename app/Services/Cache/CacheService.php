@@ -5,6 +5,7 @@ namespace App\Services\Cache;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
+use InvalidArgumentException;
 
 class CacheService
 {
@@ -21,13 +22,31 @@ class CacheService
 
     public static function make(): self
     {
+        try {
+            $store = self::configuredStore();
+        } catch (\Throwable) {
+            $store = Cache::build(['driver' => 'null']);
+        }
+
         return new self(
-            Cache::store(config('cdtm-cache.store')),
+            $store,
             (int) config('cdtm-cache.ttl'),
             (float) config('cdtm-cache.jitter'),
             (int) config('cdtm-cache.lock_ttl'),
             (int) config('cdtm-cache.lock_wait'),
         );
+    }
+
+    public static function configuredStore(): Repository
+    {
+        $name = config('cdtm-cache.store');
+
+        // A null name would silently resolve to the default store.
+        if (! is_string($name) || trim($name) === '') {
+            throw new InvalidArgumentException('CDTM_CACHE_STORE is empty.');
+        }
+
+        return Cache::store($name);
     }
 
     /**
