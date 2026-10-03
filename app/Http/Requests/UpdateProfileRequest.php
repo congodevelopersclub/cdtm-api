@@ -86,10 +86,6 @@ class UpdateProfileRequest extends FormRequest
             // Projects
             'projects' => ['sometimes', 'array'],
             'projects.*' => ['array'],
-            'projects.*.id' => [
-                'nullable', 'integer',
-                Rule::exists('projects', 'id')->where('profile_id', $this->route('profile')->id),
-            ],
             'projects.*.title' => ['required', 'string', 'max:255'],
             'projects.*.description' => ['nullable', 'string'],
             'projects.*.link' => ['nullable', 'string', 'max:2048'],
