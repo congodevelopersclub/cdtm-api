@@ -34,7 +34,6 @@ jobs:
               --exclude='storage/logs' \
               --exclude='storage/framework/cache' \
               --exclude='storage/framework/sessions' \
-              --exclude='storage/framework/views' \
               --exclude='storage/api-docs' \
               -czf cdtm-api-${{ github.event.release.tag_name }}.tar.gz . || [ $? -eq 1 ]
       - name: Add SSH key

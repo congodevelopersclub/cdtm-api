@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\Exception\{HttpExceptionInterface, NotFoundHttp
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
@@ -24,6 +25,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if (
+                $e->getStatusCode() === 403
+                && $request->user() === null
+                && $request->is(config('telescope.path') . '*')
+            ) {
+                return redirect()
+                    ->route('login')
+                    ->with('message', 'You need to login to have access to this page');
+            }
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );

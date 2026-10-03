@@ -62,7 +62,6 @@ jobs:
               --exclude='storage/logs' \
               --exclude='storage/framework/cache' \
               --exclude='storage/framework/sessions' \
-              --exclude='storage/framework/views' \
               -czf dev-build.tar.gz . || [ $? -eq 1 ]
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.9.0

@@ -19,8 +19,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
-
-    // });
     Route::apiResource('skills', SkillController::class);
 
     Route::apiResource('categories', CategoryController::class);
