@@ -11,6 +11,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthController::class, 'me'])->name('auth.me');
 
     Route::get('profiles', [ProfileController::class, 'index']);
+    Route::get('profiles/stats', [ProfileController::class, 'stats'])->name('profiles.stats');
     Route::get('profiles/{profile}', [ProfileController::class, 'show']);
     Route::post('profiles', [ProfileController::class, 'store']);
     Route::patch('profiles/{profile}', [ProfileController::class, 'update']);
