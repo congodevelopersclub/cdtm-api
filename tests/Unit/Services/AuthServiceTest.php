@@ -3,12 +3,14 @@
 namespace Tests\Unit\Services;
 
 use App\Exceptions\InvalidOAuthCodeException;
+use App\Mail\WelcomeUserMail;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
@@ -23,7 +25,7 @@ class AuthServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AuthService();
+        $this->service = $this->app->make(AuthService::class);
     }
 
     private function fakeSocialiteUser(
@@ -60,6 +62,8 @@ class AuthServiceTest extends TestCase
 
     public function test_creates_a_new_user_and_profile_when_no_match_exists(): void
     {
+        Mail::fake();
+
         $linkedInUser = $this->fakeSocialiteUser('li-999', 'newperson@example.com');
 
         $result = $this->service->signUpOrLogin($linkedInUser);
@@ -83,6 +87,10 @@ class AuthServiceTest extends TestCase
         $this->assertNotNull($cached);
         $this->assertEquals($user->id, $cached['user_id']);
         $this->assertNotEmpty($cached['token']);
+
+        Mail::assertQueued(WelcomeUserMail::class, function (WelcomeUserMail $mail) use ($user) {
+            return $mail->user->id === $user->id && $mail->hasTo($user->email);
+        });
     }
 
     public function test_links_linkedin_id_to_an_existing_user_matched_by_email(): void

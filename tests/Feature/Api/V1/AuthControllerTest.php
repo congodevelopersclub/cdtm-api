@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
+use Laravel\Sanctum\Sanctum;
 use Mockery;
 use Tests\TestCase;
 
@@ -206,6 +207,8 @@ class AuthControllerTest extends TestCase
     {
         $user = User::factory()->has(Profile::factory())->create();
 
+        Sanctum::actingAs($user);
+
         $response = $this->getJson(self::SHOW_URI . '/' . $user->id);
 
         $response->assertStatus(200)
@@ -220,7 +223,9 @@ class AuthControllerTest extends TestCase
 
     public function test_show_returns_404_for_a_nonexistent_user(): void
     {
-        $response = $this->getJson(self::SHOW_URI . '/999999');
+        Sanctum::actingAs(User::factory()->create());
+
+        $response = $this->getJson(self::SHOW_URI . '/00000000-0000-0000-0000-000000000000');
 
         $response->assertStatus(404);
     }

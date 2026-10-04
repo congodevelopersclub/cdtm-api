@@ -16,7 +16,7 @@ class ProfileService
     {
         DB::transaction(function () use ($validatedData, $profile) {
             // 1. Update basic profile fields
-            $profile->update(collect($validatedData)->only(['name', 'bio', 'location', 'headline'])->toArray());
+            $profile->update(collect($validatedData)->only(['name', 'bio', 'location', 'headline', 'category_id'])->toArray());
 
             // 2. Sync skills (only touches this if 'skills' key was sent)
             if (array_key_exists('skills', $validatedData)) {
@@ -29,7 +29,7 @@ class ProfileService
             }
         });
 
-        return $profile->load(['skills', 'projects']);
+        return $profile->load(['skills', 'projects', 'category']);
     }
 
     /**

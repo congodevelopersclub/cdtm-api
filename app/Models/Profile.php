@@ -39,11 +39,24 @@ use OpenApi\Attributes as OA;
             type: 'array',
             items: new OA\Items(ref: '#/components/schemas/Project')
         ),
+        new OA\Property(
+            property: 'category_id',
+            type: 'integer',
+            nullable: true,
+            description: 'The associated category ID',
+            example: 1
+        ),
+        new OA\Property(
+            property: 'category',
+            nullable: true,
+            description: 'The category linked to this profile',
+            ref: '#/components/schemas/Category'
+        ),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]
 )]
-#[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status'])]
+#[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status', 'category_id'])]
 class Profile extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\ProfileFactory> */
@@ -60,6 +73,14 @@ class Profile extends BaseModel
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Category, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**

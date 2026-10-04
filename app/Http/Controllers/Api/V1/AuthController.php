@@ -43,7 +43,7 @@ class AuthController extends Controller
     #[OA\Get(
         path: '/api/v1/auth/sign-up',
         operationId: 'authSignUp',
-        summary: 'Sign up or log in a user via LinkedIn OAuth',
+        summary: 'Sign up or login a user using LinkedIn OAuth',
         description: 'Authenticates the user against LinkedIn, then either creates a new account or logs the user in if one already exists. Returns 201 if a new account was created, 200 if an existing user logged in.',
         tags: ['Auth'],
         responses: [
@@ -230,7 +230,7 @@ class AuthController extends Controller
     )]
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user(), 200);
+        return response()->json($request->user()->load('profile'), 200);
     }
 
 }

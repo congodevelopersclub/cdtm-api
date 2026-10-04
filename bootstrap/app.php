@@ -12,16 +12,31 @@ use Symfony\Component\HttpKernel\Exception\{HttpExceptionInterface, NotFoundHttp
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ForceJsonResponse::class);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if (
+                $e->getStatusCode() === 403
+                && $request->user() === null
+                && $request->is(config('telescope.path') . '*')
+            ) {
+                return redirect()
+                    ->route('login')
+                    ->with('message', 'You need to login to have access to this page');
+            }
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
@@ -44,11 +59,12 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Unauthenticated.',
-                ], 401);
-            }
+            // if ($request->is('api/*') || $request->expectsJson()) {
+
+            // }
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
         });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {

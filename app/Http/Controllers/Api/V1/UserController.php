@@ -22,28 +22,15 @@ class UserController extends Controller
                 description: 'ID of the user to retrieve',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer', example: 1)
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
             ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'User retrieved successfully',
+                description: 'Authenticated user retrieved successfully',
                 content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(
-                            property: 'data',
-                            allOf: [
-                                new OA\Schema(ref: '#/components/schemas/User'),
-                                new OA\Schema(
-                                    properties: [
-                                        new OA\Property(property: 'profile', ref: '#/components/schemas/Profile'),
-                                    ]
-                                ),
-                            ]
-                        ),
-                    ],
-                    type: 'object'
+                    ref: '#/components/schemas/User'
                 )
             ),
             new OA\Response(

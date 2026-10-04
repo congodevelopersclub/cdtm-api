@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class UserControllerTest extends TestCase
@@ -12,6 +13,13 @@ class UserControllerTest extends TestCase
     use RefreshDatabase;
 
     private const ENDPOINT = '/api/v1/users';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     public function test_show_returns_the_user_with_profile_loaded(): void
     {
@@ -63,19 +71,12 @@ class UserControllerTest extends TestCase
 
     public function test_show_returns_404_for_a_nonexistent_user_id(): void
     {
-        $response = $this->getJson(self::ENDPOINT . '/999999');
+        $response = $this->getJson(self::ENDPOINT . '/00000000-0000-0000-0000-000000000000');
 
         $response->assertStatus(404)
             ->assertJson([
                 'message' => 'User not found.',
-                'code' => 'MODEL_NOT_FOUND'
+                'code' => 'MODEL_NOT_FOUND',
             ]);
-    }
-
-    public function test_show_returns_404_for_a_non_numeric_id(): void
-    {
-        $response = $this->getJson(self::ENDPOINT . '/not-a-number');
-
-        $response->assertStatus(404);
     }
 }
