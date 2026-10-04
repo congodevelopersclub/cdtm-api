@@ -128,6 +128,7 @@ class ProfileController extends Controller
             ->orderByDesc('total')
             ->orderBy('label')
             ->limit($limit)
+            ->toBase()
             ->get()
             ->map(fn ($row) => [
                 'skill_id' => $row->skill_id,
@@ -143,6 +144,7 @@ class ProfileController extends Controller
             ->groupBy('profiles.category_id', 'categories.name')
             ->orderByDesc('total')
             ->orderBy('label')
+            ->toBase()
             ->get()
             ->map(fn ($row) => [
                 'category_id' => $row->category_id,
@@ -177,7 +179,7 @@ class ProfileController extends Controller
             ->groupBy('label')
             ->toBase()
             ->get()
-            ->sortBy(fn ($row) => array_search($row->label, $rangeOrder))
+            ->sortBy(fn ($row) => array_search($row->label, $rangeOrder, true))
             ->map(fn ($row) => ['label' => $row->label, 'total' => (int) $row->total])
             ->values();
 
