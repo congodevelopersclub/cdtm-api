@@ -15,8 +15,10 @@ ln -sfn "$DEPLOY_PATH/_shared/.env" "$RELEASE_DIR/.env"
 rm -rf "$RELEASE_DIR/storage"
 ln -sfn "$DEPLOY_PATH/_shared/storage" "$RELEASE_DIR/storage"
 
+ln -sfn "$DEPLOY_PATH/_shared/database/database.sqlite" "$RELEASE_DIR/database/database.sqlite"
+
 echo "==> Running migrations"
-php "$RELEASE_DIR/artisan" migrate:fresh --seed --force
+php "$RELEASE_DIR/artisan" migrate --force
 
 echo "==> Caching config/routes/views/swagger"
 php "$RELEASE_DIR/artisan" l5-swagger:generate
@@ -37,6 +39,8 @@ ln -sfn "$RELEASE_DIR" "$DEPLOY_PATH/current"
 
 echo "==> Reloading PHP-FPM (clears OPcache)"
 sudo systemctl reload php8.3-fpm
+
+echo "==> Restarting backend schedule"
 sudo systemctl restart 'cdtm-api-*-schedule@*'
 
 echo "==> Cleaning up old releases (keep last 5)"
