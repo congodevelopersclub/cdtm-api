@@ -32,15 +32,15 @@ class MailServiceTest extends TestCase
     public function test_welcome_user_mail_properties(): void
     {
         $user = User::factory()->create([
-            'name' => 'Alice',
-            'email' => 'alice@example.com',
+            'name' => 'Paul Van haver',
+            'email' => 'stromae@maosaert.com',
         ]);
 
         $mailable = new WelcomeUserMail($user);
 
-        $this->assertEquals('Bienvenue sur CDTM', $mailable->envelope()->subject);
+        $this->assertEquals('Bienvenue sur Congo Developers Talent Marketplace', $mailable->envelope()->subject);
         $this->assertEquals('emails.welcome', $mailable->content()->markdown);
-        $this->assertEquals(['name' => 'Alice'], $mailable->content()->with);
+        $this->assertEquals(['name' => 'Paul Van haver'], $mailable->content()->with);
         $this->assertEmpty($mailable->attachments());
     }
 }

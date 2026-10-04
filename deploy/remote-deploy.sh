@@ -37,6 +37,7 @@ ln -sfn "$RELEASE_DIR" "$DEPLOY_PATH/current"
 
 echo "==> Reloading PHP-FPM (clears OPcache)"
 sudo systemctl reload php8.3-fpm
+sudo systemctl restart 'cdtm-api-*-schedule@*'
 
 echo "==> Cleaning up old releases (keep last 5)"
 cd "$DEPLOY_PATH/releases"
