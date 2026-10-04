@@ -87,7 +87,7 @@ class SkillController extends Controller
         summary: "Get a single skill",
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         responses: [
             new OA\Response(
@@ -113,7 +113,7 @@ class SkillController extends Controller
         summary: "Update a skill",
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -163,7 +163,7 @@ class SkillController extends Controller
         summary: "Delete a skill",
         tags: ["Skills"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "uuid", example: "00000000-0000-0000-0000-000000000000")),
         ],
         responses: [
             new OA\Response(response: 204, description: "Skill deleted successfully"),

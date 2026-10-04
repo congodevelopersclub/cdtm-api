@@ -11,13 +11,14 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::create('profiles', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')
                 ->unique()
                 ->constrained()
                 ->onDelete('cascade');
             $table->string('email')->unique();
             $table->string('name')->nullable();
+            $table->string('linkedin_id');
             $table->string('headline')->nullable();
             $table->text('bio')->nullable();
             $table->string('avatar_url')->nullable();

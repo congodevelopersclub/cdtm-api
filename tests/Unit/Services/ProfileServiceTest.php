@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Profile;
 use App\Models\Project;
 use App\Models\Skill;
+use App\Models\Category;
 use App\Services\ProfileService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,63 @@ class ProfileServiceTest extends TestCase
 
         $this->assertTrue($result->relationLoaded('skills'));
         $this->assertTrue($result->relationLoaded('projects'));
+        $this->assertTrue($result->relationLoaded('category'));
+    }
+
+    #[Test]
+    public function it_assigns_a_category_when_category_id_is_provided(): void
+    {
+        $profile = Profile::factory()->create(['category_id' => null]);
+        $category = Category::factory()->create(['name' => 'Backend', 'slug' => 'backend']);
+
+        $result = $this->profileService->updateProfile($profile, [
+            'name' => 'Developer',
+            'category_id' => $category->id,
+        ]);
+
+        $this->assertSame($category->id, $result->category_id);
+        $this->assertNotNull($result->category);
+        $this->assertSame('Backend', $result->category->name);
+
+        $this->assertDatabaseHas('profiles', [
+            'id' => $profile->id,
+            'category_id' => $category->id,
+        ]);
+    }
+
+    #[Test]
+    public function it_clears_the_category_when_category_id_is_null(): void
+    {
+        $category = Category::factory()->create();
+        $profile = Profile::factory()->create(['category_id' => $category->id]);
+
+        $result = $this->profileService->updateProfile($profile, [
+            'name' => 'Developer',
+            'category_id' => null,
+        ]);
+
+        $this->assertNull($result->category_id);
+
+        $this->assertDatabaseHas('profiles', [
+            'id' => $profile->id,
+            'category_id' => null,
+        ]);
+    }
+
+    #[Test]
+    public function it_does_not_touch_category_when_category_id_key_is_absent(): void
+    {
+        $category = Category::factory()->create();
+        $profile = Profile::factory()->create(['category_id' => $category->id]);
+
+        $this->profileService->updateProfile($profile, [
+            'name' => 'Updated Name',
+        ]);
+
+        $this->assertDatabaseHas('profiles', [
+            'id' => $profile->id,
+            'category_id' => $category->id,
+        ]);
     }
 
     #[Test]
