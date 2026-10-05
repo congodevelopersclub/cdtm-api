@@ -22,25 +22,19 @@ Both commands accept `--json`. Prefer it to table output when you need exact val
 Every entry has `id`, `batch_id`, `type`, `content`, `family_hash`, and `created_at`. The `content` keys match the Telescope UI for that type. For example, a query has `sql`, `time`, `slow`, `file`, and `line`, while an exception has `class`, `message`, `file`, `line`, and `trace`. Two fields are not populated by these commands: `tags` is always `[]` (use `--tag` to filter rather than reading tags from the output), and `sequence` is `null` when the entry is addressed by UUID.
 
 ```bash
-
 # Exception class, message, and location for the latest exception
-
 php artisan telescope:show latest:exception --json | jq '.entry.content | {class, message, file, line}'
 
 # Slow queries in the latest request, with the file that ran them
-
 php artisan telescope:show latest:request --json --type=query | jq '.batch[] | select(.content.slow) | {sql: .content.sql, time: .content.time, file: .content.file, line: .content.line}'
 
 # Repeated SQL patterns in a request (N+1 candidates), most repeated first
-
 php artisan telescope:show latest:request --json --type=query | jq '[.batch[].content.sql] | group_by(.) | map({sql: .[0], count: length}) | sort_by(-.count) | .[] | select(.count > 1)'
 
 # Recent 500 responses
-
 php artisan telescope:list request --json --limit=50 | jq '.[] | select(.content.response_status >= 500) | {id, uri: .content.uri, status: .content.response_status}'
 
 # Failed jobs and their exception messages
-
 php artisan telescope:list job --json | jq '.[] | select(.content.status == "failed") | {id, name: .content.name, error: .content.exception.message}'
 ```
 
