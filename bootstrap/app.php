@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Exceptions\InvalidOAuthCodeException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\AuthenticationException;
@@ -11,16 +12,31 @@ use Symfony\Component\HttpKernel\Exception\{HttpExceptionInterface, NotFoundHttp
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ForceJsonResponse::class);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if (
+                $e->getStatusCode() === 403
+                && $request->user() === null
+                && $request->is(config('telescope.path') . '*')
+            ) {
+                return redirect()
+                    ->route('login')
+                    ->with('message', 'You need to login to have access to this page');
+            }
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
@@ -34,12 +50,21 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (AuthenticationException $e, Request $request) {
+        $exceptions->render(function (InvalidOAuthCodeException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'message' => 'Unauthenticated.',
+                    'message' => 'Invalid or expired code.',
                 ], 401);
             }
+        });
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            // if ($request->is('api/*') || $request->expectsJson()) {
+
+            // }
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
         });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
@@ -58,7 +83,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 404);
             }
 
-            // Genuinely unmatched route
             return response()->json([
                 'message' => 'Endpoint not found.',
                 'code' => 'ENDPOINT_NOT_FOUND',
@@ -83,8 +107,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'message' => app()->isProduction() && $status === 500
-                        ? 'Server error.'
+                        ? 'Internal server error.'
                         : $e->getMessage(),
+                    'code' => 'INTERNAL_SERVER_ERROR',
                 ], $status);
             }
         });

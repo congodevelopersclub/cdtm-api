@@ -33,3 +33,6 @@ parameters:
             path: config/*
         -
             message: '#Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder<.*>::.*#'
+        -
+            message: '#Access to constant ATTR_SSL_CA on an unknown class Pdo\\Mysql#'
+            path: config/database.php

@@ -11,6 +11,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Str;
 use App\Enums\UserRole;
 use OpenApi\Attributes as OA;
 
@@ -21,13 +23,14 @@ use OpenApi\Attributes as OA;
     title: 'User',
     description: 'A user model',
     properties: [
-        new OA\Property(property: 'id', type: 'integer', description: 'The user ID'),
+        new OA\Property(property: 'id', type: 'uuid', description: 'The user ID', example: '123e4567-e89b-12d3-a456-426614174000'),
         new OA\Property(property: 'name', type: 'string', description: 'The user name'),
         new OA\Property(property: 'email', type: 'string', description: 'The user email'),
         new OA\Property(property: 'avatar_url', type: 'string', description: 'The user avatar URL'),
         new OA\Property(property: 'linkedin_id', type: 'string', description: 'The user LinkedIn ID'),
         new OA\Property(property: 'email_verified_at', type: 'string', format: 'date-time', description: 'The email verification timestamp'),
         new OA\Property(property: 'role', ref: '#/components/schemas/UserRole'),
+        new OA\Property(property: 'profile', nullable: true, description: 'The user profile', ref: '#/components/schemas/Profile'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]
@@ -38,6 +41,11 @@ class User extends Authenticatable
     use HasFactory;
     use Notifiable;
     use HasApiTokens;
+    use HasUuids;
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
 
     /**
      * @return HasOne<Profile, $this>
@@ -68,5 +76,13 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /**
+    * @return string
+    */
+    public function newUniqueId(): string
+    {
+        return (string) Str::uuid7();
     }
 }
