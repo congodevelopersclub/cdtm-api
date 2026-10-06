@@ -173,7 +173,7 @@ class AuthServiceTest extends TestCase
     public function test_throws_model_not_found_when_the_cached_user_no_longer_exists(): void
     {
         Cache::put('oauth_code:ghost', [
-            'user_id' => 999999, // adjust to match your PK type (int/uuid)
+            'user_id' => '00000000-0000-0000-0000-000000000000',
             'token' => 'irrelevant',
         ], now()->addMinutes(2));
 

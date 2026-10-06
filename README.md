@@ -258,3 +258,21 @@ A PR cannot be merged unless steps 2–5 pass. Step 6 only runs after merge, on 
 ---
 
 Questions or suggestions about this process? Open an issue or start a discussion Congo developers club's slack
+
+## Docker
+
+Stack: PHP 8.3, Laravel, PostgreSQL 16 (persistent volume `pgdata`), Composer.
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate
+docker compose exec app php artisan test
+```
+
+- The API is available at http://localhost:8000.
+- PostgreSQL is exposed on `localhost:5432` (variables `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` in `.env`; host is `db` inside Docker).
+- Data persists in the `pgdata` volume; `docker compose down -v` deletes it.
+- PHPUnit uses in-memory SQLite (see `phpunit.xml`), so tests need no database setup.
