@@ -7,10 +7,11 @@ Route::get('auth', [AuthController::class, 'redirect'])->name('auth.index');
 Route::get('auth/linkedin/signup', [AuthController::class, 'signUp'])->name('auth.signUp');
 Route::post('auth/exchange-code', [AuthController::class, 'exchangeCode'])->name('auth.exchangeCode');
 
+Route::get('profiles', [ProfileController::class, 'index']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthController::class, 'me'])->name('auth.me');
 
-    Route::get('profiles', [ProfileController::class, 'index']);
     Route::get('profiles/{profile}', [ProfileController::class, 'show']);
     Route::post('profiles', [ProfileController::class, 'store']);
     Route::patch('profiles/{profile}', [ProfileController::class, 'update']);
