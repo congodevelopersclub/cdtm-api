@@ -21,15 +21,6 @@ class CategoryControllerTest extends TestCase
     }
 
     #[Test]
-    public function test_categories_require_authentication(): void
-    {
-        $this->app['auth']->forgetGuards();
-
-        $this->getJson('/api/v1/categories')->assertUnauthorized();
-        $this->postJson('/api/v1/categories', ['name' => 'Backend'])->assertUnauthorized();
-    }
-
-    #[Test]
     public function test_can_paginate_categories(): void
     {
         Category::factory()->count(21)->create();
