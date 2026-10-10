@@ -112,7 +112,7 @@ class ProfileFactory extends Factory
         $result = collect($links)
             ->filter(fn () => fake()->boolean(70))
             ->all();
-        
+
         return $result === [] ? null : $result;
     }
 }

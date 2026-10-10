@@ -38,10 +38,10 @@ class ProfileService
         return $profile->load(['skills', 'projects', 'category']);
     }
 
-   /**
-     * @param  array{location?: string|null, category?: string|null, skills?: string|null}  $validatedData
-     * @return LengthAwarePaginator<int, Profile>
-     */
+    /**
+      * @param  array{location?: string|null, category?: string|null, skills?: string|null}  $validatedData
+      * @return LengthAwarePaginator<int, Profile>
+      */
     // TODO: This query needs to be optmized as soon as possible
     public function search(array $validatedData): LengthAwarePaginator
     {

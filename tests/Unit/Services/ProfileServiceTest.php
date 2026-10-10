@@ -448,62 +448,62 @@ class ProfileServiceTest extends TestCase
     public function test_it_returns_a_length_aware_paginator(): void
     {
         $this->makeProfile();
- 
+
         $result = $this->profileService->search([]);
- 
+
         $this->assertInstanceOf(LengthAwarePaginator::class, $result);
         $this->assertSame(1, $result->total());
     }
- 
+
     public function test_it_returns_all_profiles_when_no_filters_are_given(): void
     {
         $profiles = Profile::factory()->count(3)->create();
- 
+
         $result = $this->profileService->search([]);
- 
+
         $this->assertSame($profiles->pluck('id')->all(), $this->ids($result));
     }
- 
+
     public function test_it_filters_by_location(): void
     {
         $paris = $this->makeProfile(['location' => 'Paris']);
         $this->makeProfile(['location' => 'Lyon']);
- 
+
         $result = $this->profileService->search(['location' => 'Paris']);
- 
+
         $this->assertSame([$paris->id], $this->ids($result));
     }
- 
+
     public function test_location_filter_is_an_exact_match(): void
     {
         $this->makeProfile(['location' => 'Paris']);
- 
+
         $result = $this->profileService->search(['location' => 'Par']);
- 
+
         $this->assertSame(1, $result->total());
     }
- 
+
     public function test_it_filters_by_category_name(): void
     {
         $developer = Category::factory()->create(['name' => 'Developer']);
         $designer = Category::factory()->create(['name' => 'Designer']);
- 
+
         $dev = $this->makeProfile(['category_id' => $developer->id]);
         $this->makeProfile(['category_id' => $designer->id]);
- 
+
         $result = $this->profileService->search(['category' => 'Developer']);
- 
+
         $this->assertSame([$dev->id], $this->ids($result));
     }
 
-     /**
-     * Create a profile with optional attributes and a list of skill slugs.
-     * Skills are reused when a slug already exists.
-     */
+    /**
+    * Create a profile with optional attributes and a list of skill slugs.
+    * Skills are reused when a slug already exists.
+    */
     private function makeProfile(array $attributes = [], array $skillSlugs = []): Profile
     {
         $profile = Profile::factory()->create($attributes);
- 
+
         if ($skillSlugs) {
             // Factories bypass $fillable, so `name` is always set
             $skillIds = collect($skillSlugs)->map(
@@ -513,13 +513,13 @@ class ProfileServiceTest extends TestCase
                         'name' => ucfirst($slug),
                     ])
             )->pluck('id');
- 
+
             $profile->skills()->attach($skillIds);
         }
- 
+
         return $profile;
     }
- 
+
     private function ids(LengthAwarePaginator $result): array
     {
         return collect($result->items())->pluck('id')->all();

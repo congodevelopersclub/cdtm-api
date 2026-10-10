@@ -29,11 +29,11 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'status', type: 'string', description: 'The profile status'),
         new OA\Property(property: 'account_status', ref: '#/components/schemas/ProfileAccountStatus'),
         new OA\Property(
-             property: 'skills',
-             description: 'Skills linked to this profile',
-             type: 'array',
-             items: new OA\Items(ref: '#/components/schemas/Skill')
-         ),
+            property: 'skills',
+            description: 'Skills linked to this profile',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/Skill')
+        ),
         new OA\Property(
             property: 'projects',
             description: 'Projects linked to this profile',
@@ -54,11 +54,11 @@ use OpenApi\Attributes as OA;
             ref: '#/components/schemas/Category'
         ),
         new OA\Property(
-             property: 'links',
-             description: 'Links linked to this profile',
-             type: 'array',
-             items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
-         ),
+            property: 'links',
+            description: 'Links linked to this profile',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
+        ),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]

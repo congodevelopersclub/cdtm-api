@@ -52,11 +52,11 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Property(
-             property: 'links',
-             description: 'Links linked to this profile',
-             type: 'array',
-             items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
-         ),
+            property: 'links',
+            description: 'Links linked to this profile',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
+        ),
     ]
 )]
 class UpdateProfileRequest extends FormRequest
@@ -87,7 +87,7 @@ class UpdateProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:2000'],
