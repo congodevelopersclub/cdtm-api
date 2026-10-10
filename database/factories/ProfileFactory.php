@@ -2,8 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\{Profile, User, Project, Skill};
+use App\Models\{Profile, User, Project, Skill, Category};
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Enums\LinkType;
 
 /**
  * @extends Factory<Profile>
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class ProfileFactory extends Factory
 {
     protected $model = Profile::class;
+
     /**
      * Define the model's default state.
      *
@@ -18,6 +20,7 @@ class ProfileFactory extends Factory
      */
     public function definition(): array
     {
+        $categoryIds = Category::pluck('id');
         return [
             'user_id' => User::factory(),
             'name' => $this->faker->name(),
@@ -33,6 +36,8 @@ class ProfileFactory extends Factory
                 \App\Enums\ProfileAccountStatus::VALIDATED,
                 \App\Enums\ProfileAccountStatus::REJECTED,
             ]),
+            'category_id' =>  ($categoryIds === null || $categoryIds->isEmpty()) ? null : $categoryIds->random(),
+            'links' => $this->fakeLinks(),
         ];
     }
 
@@ -91,5 +96,23 @@ class ProfileFactory extends Factory
                 ])
             );
         });
+    }
+
+    /**
+     * @return array<LinkType, string>|null
+     */
+    private function fakeLinks(): array|null
+    {
+        $links = [
+            LinkType::LinkedIn->value => 'https://www.linkedin.com/in/' . fake()->unique()->userName(),
+            LinkType::GitHub->value   => 'https://github.com/' . fake()->unique()->userName(),
+            LinkType::Website->value  => 'https://' . fake()->domainName(),
+        ];
+
+        $result = collect($links)
+            ->filter(fn () => fake()->boolean(70))
+            ->all();
+        
+        return $result === [] ? null : $result;
     }
 }
