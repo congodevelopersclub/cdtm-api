@@ -16,9 +16,13 @@ class ProfileService
     */
     public function updateProfile(Profile $profile, array $validatedData): Profile
     {
+        if (array_key_exists('links', $validatedData)) {
+            $validatedData['links'] = $validatedData['links'] === '' ? null : $validatedData['links'];
+        }
+
         DB::transaction(function () use ($validatedData, $profile) {
             // 1. Update basic profile fields
-            $profile->update(collect($validatedData)->only(['name', 'bio', 'location', 'headline', 'category_id'])->toArray());
+            $profile->update(collect($validatedData)->only(['name', 'bio', 'location', 'headline', 'category_id', 'links'])->toArray());
 
             // 2. Sync skills (only touches this if 'skills' key was sent)
             if (array_key_exists('skills', $validatedData)) {
@@ -43,7 +47,7 @@ class ProfileService
     {
         return Profile::with(['skills', 'projects', 'category'])
             ->when($validatedData['location'] ?? null, function ($query, $location) {
-                $query->where('location', $location);
+                $query->where('location', 'like', "%{$location}%");
             })
             ->when($validatedData['category'] ?? null, function ($query, $category) {
                 $query->whereHas('category', fn ($q) => $q->where('name', $category));

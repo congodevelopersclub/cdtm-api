@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use App\Enums\LinkType;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
@@ -27,7 +28,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'location', type: 'string', description: 'The profile location'),
         new OA\Property(property: 'status', type: 'string', description: 'The profile status'),
         new OA\Property(property: 'account_status', ref: '#/components/schemas/ProfileAccountStatus'),
-         new OA\Property(
+        new OA\Property(
              property: 'skills',
              description: 'Skills linked to this profile',
              type: 'array',
@@ -52,19 +53,30 @@ use OpenApi\Attributes as OA;
             description: 'The category linked to this profile',
             ref: '#/components/schemas/Category'
         ),
+        new OA\Property(
+             property: 'links',
+             description: 'Links linked to this profile',
+             type: 'array',
+             items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
+         ),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', description: 'The creation timestamp'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', description: 'The update timestamp'),
     ]
 )]
-#[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status', 'category_id'])]
+#[Fillable(['user_id', 'email', 'name', 'linkedin_id', 'headline', 'bio', 'avatar_url', 'location', 'status', 'account_status', 'category_id', 'links'])]
 class Profile extends BaseModel
 {
     /** @use HasFactory<\Database\Factories\ProfileFactory> */
     use HasFactory;
 
+    protected $hidden = [
+        'category_id',
+    ];
+
     protected $casts = [
         'is_confirmed' => 'boolean',
         'account_status' => \App\Enums\ProfileAccountStatus::class,
+        'links' => 'array'
     ];
 
     /**
@@ -100,5 +112,15 @@ class Profile extends BaseModel
             ->using(SkillProfile::class)
             ->as('details')
             ->withPivot(['proficiency', 'years_experience']);
+    }
+
+
+    /**
+     * @param LinkType $type
+     * @return string
+    */
+    public function link(LinkType $type): ?string
+    {
+        return $this->links[$type->value] ?? null;
     }
 }

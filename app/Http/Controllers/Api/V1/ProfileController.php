@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
+use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest, SearchProfilesRequest};
 use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
 use OpenApi\Attributes as OA;
@@ -70,7 +70,7 @@ class ProfileController extends Controller
         parameters: [
             new OA\Parameter(
                 name: 'location',
-                description: 'Exact location to match',
+                description: 'Exact location to match (case-insensitive, partial matches allowed)',
                 in: 'query',
                 required: false,
                 schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Paris')
@@ -143,22 +143,32 @@ class ProfileController extends Controller
                             example: ['location' => ['The location field must not be greater than 255 characters.']]
                         ),
                     ],
-                    type: 'object'
+                    type: 'object',
+                    examples: [
+                        new OA\Examples(
+                            example: 'unknownParameter',
+                            summary: 'Unknown query parameter',
+                            value: [
+                                'message' => 'The foo parameter is not allowed.',
+                                'errors' => ['foo' => ['The foo parameter is not allowed.']],
+                            ]
+                        ),
+                        new OA\Examples(
+                            example: 'invalidValue',
+                            summary: 'Invalid value',
+                            value: [
+                                'message' => 'The page field must be at least 1.',
+                                'errors' => ['page' => ['The page field must be at least 1.']],
+                            ]
+                        ),
+                    ]
                 )
             ),
         ]
     )]
-    public function search(Request $request): JsonResponse
+    public function search(SearchProfilesRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'location' => 'nullable|string|max:255',
-            'category' => 'nullable|string|max:255',
-            'skills'   => 'nullable|string|max:255', // comma-separated: "php,laravel"
-        ]);
-
-        $profiles = $this->profileService->search($validated);
-
-        return response()->json($profiles, 200);
+        return response()->json($this->profileService->search($request->validated()), 200);
     }
 
     #[OA\Post(
@@ -291,7 +301,6 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request, Profile $profile): JsonResponse
     {
         $validated = $request->validated();
-
         $profile = $this->profileService->updateProfile($profile, $validated);
 
         return response()->json(['data' => $profile], 200);

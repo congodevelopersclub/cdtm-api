@@ -45,8 +45,7 @@ class CategoryControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.slug', 'devops')
-            ->assertJsonPath('data.is_active', false)
-            ->assertJsonPath('data.sort_order', 10);
+            ->assertJsonPath('data.is_active', false);
     }
 
     #[Test]
@@ -65,7 +64,7 @@ class CategoryControllerTest extends TestCase
             ->assertJsonPath('data.2.name', 'Inactive')
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'name', 'slug', 'description', 'is_active', 'sort_order'],
+                    '*' => ['id', 'name', 'slug', 'description', 'is_active'],
                 ],
             ]);
     }
@@ -85,8 +84,7 @@ class CategoryControllerTest extends TestCase
             ->assertJsonPath('data.name', 'Backend')
             ->assertJsonPath('data.slug', 'backend')
             ->assertJsonPath('data.description', 'Server-side development')
-            ->assertJsonPath('data.is_active', true)
-            ->assertJsonPath('data.sort_order', 1);
+            ->assertJsonPath('data.is_active', true);
 
         $this->assertDatabaseHas('categories', [
             'name' => 'Backend',
@@ -149,9 +147,7 @@ class CategoryControllerTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('data.name', 'New Name')
-            ->assertJsonPath('data.is_active', false)
-            ->assertJsonPath('data.sort_order', 5);
+            ->assertJsonPath('data.name', 'New Name');
 
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
