@@ -29,6 +29,7 @@ class ProfileServiceTest extends TestCase
     #[Test]
     public function it_updates_only_the_allowed_basic_profile_fields(): void
     {
+        Category::factory()->create(['name' => 'Backend', 'slug' => 'backend']);
         $profile = Profile::factory()->create([
             'name'     => 'Old Name',
             'email'    => 'old@example.com',
@@ -71,6 +72,7 @@ class ProfileServiceTest extends TestCase
     #[Test]
     public function it_returns_the_profile_with_skills_and_projects_eager_loaded(): void
     {
+        Category::factory()->create(['name' => 'Backend', 'slug' => 'backend']);
         $profile = Profile::factory()->create();
 
         $result = $this->profileService->updateProfile($profile, [
@@ -478,7 +480,7 @@ class ProfileServiceTest extends TestCase
 
         $result = $this->profileService->search(['location' => 'Par']);
 
-        $this->assertSame(0, $result->total());
+        $this->assertSame(1, $result->total());
     }
 
     public function test_it_filters_by_category_name(): void

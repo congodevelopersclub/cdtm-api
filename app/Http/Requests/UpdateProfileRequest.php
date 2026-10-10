@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Enums\LinkType;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
@@ -50,6 +51,12 @@ use OpenApi\Attributes as OA;
                 type:'object'
             )
         ),
+        new OA\Property(
+            property: 'links',
+            description: 'Links linked to this profile',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/ProfileLinks')
+        ),
     ]
 )]
 class UpdateProfileRequest extends FormRequest
@@ -62,6 +69,17 @@ class UpdateProfileRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $links = collect($this->input('links', []))
+            ->only(array_column(LinkType::cases(), 'value'))
+            ->map(fn ($url) => $this->normalize($url))
+            ->filter()
+            ->all();
+
+        $this->merge(['links' => $links]);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -69,6 +87,7 @@ class UpdateProfileRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:2000'],
@@ -89,6 +108,62 @@ class UpdateProfileRequest extends FormRequest
             'projects.*.title' => ['required', 'string', 'max:255'],
             'projects.*.description' => ['nullable', 'string'],
             'projects.*.link' => ['nullable', 'string', 'max:2048'],
+
+            // links
+            'links' => ['sometimes', 'array'],
+            ...$this->linkRules(),
         ];
+    }
+
+    /**
+     * Generate validation rules for each link type.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function linkRules(): array
+    {
+        $rules = [];
+
+        foreach (LinkType::cases() as $type) {
+            $field = ['nullable', 'string', 'max:255', 'url:https'];
+
+            if (($pattern = $type->pattern()) !== null) {
+                $field[] = 'regex:' . $pattern;
+            }
+
+            $rules["links.{$type->value}"] = $field;
+        }
+
+        return $rules;
+    }
+
+
+    private function normalize(mixed $url): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return null;
+        }
+
+        // Add a scheme if the user pasted "linkedin.com/in/..."
+        if (! preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . $url;
+        }
+
+        $parts = parse_url($url);
+        if (! $parts || $parts['host'] === '') {
+            return $url; // let validation reject it
+        }
+
+        $host = strtolower($parts['host']);
+        $path = rtrim($parts['path'] ?? '', '/');
+
+        // Collapse localized LinkedIn subdomains (fr.linkedin.com -> www.linkedin.com)
+        if (str_ends_with($host, 'linkedin.com')) {
+            $host = 'www.linkedin.com';
+        }
+
+        // Force https, drop query string and fragment
+        return 'https://' . $host . $path;
     }
 }

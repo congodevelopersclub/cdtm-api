@@ -68,7 +68,9 @@ class ProfileControllerTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.name', 'New Name')
             ->assertJsonPath('data.bio', 'Updated bio')
-            ->assertJsonPath('data.category_id', $category->id);
+            ->assertJsonPath('data.category.id', $category->id)
+            ->assertJsonPath('data.category.name', $category->name)
+            ->assertJsonPath('data.category.slug', $category->slug);
     }
 
     public function test_update_profile_requires_name(): void

@@ -84,6 +84,17 @@ class AuthService
         ];
     }
 
+    /**
+     * Log out the user by revoking their tokens.
+     *
+     * @param User $user
+     * @return void
+     */
+    public function logout(User $user): void
+    {
+        $user->tokens()->delete();
+    }
+
     private function createUser(SocialiteUser $linkedInUser): User
     {
         return DB::transaction(function () use ($linkedInUser) {
