@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
+use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest, SearchProfilesRequest};
 use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
 use OpenApi\Attributes as OA;
@@ -59,6 +59,117 @@ class ProfileController extends Controller
         return response()->json($posts, 200);
     }
 
+    #[OA\Get(
+        path: '/api/v1/profiles/search',
+        operationId: 'profileSearch',
+        summary: 'Search profiles',
+        description: 'Returns a paginated list of profiles filtered by location, category name and skills. '
+            . 'When `skills` is provided, profiles having at least one of the requested skills are returned, '
+            . 'ordered by the number of matching skills (most matches first).',
+        tags: ['Profile'],
+        parameters: [
+            new OA\Parameter(
+                name: 'location',
+                description: 'Exact location to match (case-insensitive, partial matches allowed)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Paris')
+            ),
+            new OA\Parameter(
+                name: 'category',
+                description: 'Exact category name to match',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Developer')
+            ),
+            new OA\Parameter(
+                name: 'skills',
+                description: 'Comma-separated list of skill slugs. Profiles matching at least one are returned.',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'php,laravel')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                description: 'Page number',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', minimum: 1, default: 1, example: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated list of matching profiles',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            items: new OA\Items(
+                                allOf: [
+                                    new OA\Schema(ref: '#/components/schemas/Profile'),
+                                    new OA\Schema(
+                                        properties: [
+                                            new OA\Property(
+                                                property: 'matched_skills_count',
+                                                description: 'Number of requested skills this profile has (only present when `skills` is provided)',
+                                                type: 'integer',
+                                                example: 2
+                                            ),
+                                        ],
+                                        type: 'object'
+                                    ),
+                                ]
+                            )
+                        ),
+                        new OA\Property(property: 'current_page', type: 'integer', example: 1),
+                        new OA\Property(property: 'last_page', type: 'integer', example: 5),
+                        new OA\Property(property: 'per_page', type: 'integer', example: 20),
+                        new OA\Property(property: 'total', type: 'integer', example: 97),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'The location field must not be greater than 255 characters.'),
+                        new OA\Property(
+                            property: 'errors',
+                            type: 'object',
+                            example: ['location' => ['The location field must not be greater than 255 characters.']]
+                        ),
+                    ],
+                    type: 'object',
+                    examples: [
+                        new OA\Examples(
+                            example: 'unknownParameter',
+                            summary: 'Unknown query parameter',
+                            value: [
+                                'message' => 'The foo parameter is not allowed.',
+                                'errors' => ['foo' => ['The foo parameter is not allowed.']],
+                            ]
+                        ),
+                        new OA\Examples(
+                            example: 'invalidValue',
+                            summary: 'Invalid value',
+                            value: [
+                                'message' => 'The page field must be at least 1.',
+                                'errors' => ['page' => ['The page field must be at least 1.']],
+                            ]
+                        ),
+                    ]
+                )
+            ),
+        ]
+    )]
+    public function search(SearchProfilesRequest $request): JsonResponse
+    {
+        return response()->json($this->profileService->search($request->validated()), 200);
+    }
 
     #[OA\Post(
         path: '/api/v1/profiles',
@@ -87,7 +198,6 @@ class ProfileController extends Controller
             'code' => 'NOT_IMPLEMENTED',
         ], 501);
     }
-
 
     #[OA\Get(
         path: '/api/v1/profiles/{profile}',
@@ -131,7 +241,6 @@ class ProfileController extends Controller
     {
         return response()->json(['data' => $profile->load(['skills', 'projects', 'category'])], 200);
     }
-
 
     #[OA\Patch(
         path: '/api/v1/profiles/{profile}',
@@ -192,12 +301,10 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request, Profile $profile): JsonResponse
     {
         $validated = $request->validated();
-
         $profile = $this->profileService->updateProfile($profile, $validated);
 
         return response()->json(['data' => $profile], 200);
     }
-
 
     #[OA\Post(
         path: '/api/v1/profiles/{profile}/validate',
@@ -266,7 +373,6 @@ class ProfileController extends Controller
 
         return response()->json(['data' => $profile], 200);
     }
-
 
     #[OA\Delete(
         path: '/api/v1/profiles/{profile}',

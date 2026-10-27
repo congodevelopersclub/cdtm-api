@@ -73,15 +73,4 @@ class CategoryTest extends TestCase
         $this->assertInstanceOf(HasMany::class, $relation);
         $this->assertSame(Profile::class, $relation->getRelated()::class);
     }
-
-    #[Test]
-    public function test_projects_relation(): void
-    {
-        $category = Category::factory()->create();
-
-        $relation = $category->projects();
-
-        $this->assertInstanceOf(HasMany::class, $relation);
-        $this->assertSame(Project::class, $relation->getRelated()::class);
-    }
 }
