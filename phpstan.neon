@@ -36,3 +36,5 @@ parameters:
         -
             message: '#Access to constant ATTR_SSL_CA on an unknown class Pdo\\Mysql#'
             path: config/database.php
+        -
+            identifier: argument.templateType

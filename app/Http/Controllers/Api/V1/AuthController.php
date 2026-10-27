@@ -233,4 +233,27 @@ class AuthController extends Controller
         return response()->json($request->user()->load('profile'), 200);
     }
 
+    #[OA\Post(
+        path: '/api/v1/logout',
+        summary: 'Log out the authenticated user',
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User logged out successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Logged out successfully.'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
+    public function logout(Request $request): JsonResponse
+    {
+        $this->authService->logout($request->user());
+        return response()->json(['message' => 'Logged out successfully.'], 200);
+    }
+
 }

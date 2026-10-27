@@ -47,6 +47,13 @@ class Category extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $hidden = [
+        'deleted_at',
+        'sort_order',
+        'created_at',
+        'updated_at',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Category $category) {
@@ -64,15 +71,5 @@ class Category extends Model
     public function profiles(): HasMany
     {
         return $this->hasMany(Profile::class);
-    }
-
-    /**
-     * Les projets appartenant à cette catégorie.
-     *
-     * @return HasMany<Project, $this>
-     */
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class);
     }
 }
