@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest};
-use Illuminate\Support\Facades\{DB, Log};
+use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest, SearchProfilesRequest};
 use App\Services\ProfileService;
 use OpenApi\Attributes as OA;
 
@@ -59,6 +58,117 @@ class ProfileController extends Controller
         return response()->json($posts, 200);
     }
 
+    #[OA\Get(
+        path: '/api/v1/profiles/search',
+        operationId: 'profileSearch',
+        summary: 'Search profiles',
+        description: 'Returns a paginated list of profiles filtered by location, category name and skills. '
+            . 'When `skills` is provided, profiles having at least one of the requested skills are returned, '
+            . 'ordered by the number of matching skills (most matches first).',
+        tags: ['Profile'],
+        parameters: [
+            new OA\Parameter(
+                name: 'location',
+                description: 'Exact location to match (case-insensitive, partial matches allowed)',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Paris')
+            ),
+            new OA\Parameter(
+                name: 'category',
+                description: 'Exact category name to match',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Developer')
+            ),
+            new OA\Parameter(
+                name: 'skills',
+                description: 'Comma-separated list of skill slugs. Profiles matching at least one are returned.',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'php,laravel')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                description: 'Page number',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', minimum: 1, default: 1, example: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated list of matching profiles',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            items: new OA\Items(
+                                allOf: [
+                                    new OA\Schema(ref: '#/components/schemas/Profile'),
+                                    new OA\Schema(
+                                        properties: [
+                                            new OA\Property(
+                                                property: 'matched_skills_count',
+                                                description: 'Number of requested skills this profile has (only present when `skills` is provided)',
+                                                type: 'integer',
+                                                example: 2
+                                            ),
+                                        ],
+                                        type: 'object'
+                                    ),
+                                ]
+                            )
+                        ),
+                        new OA\Property(property: 'current_page', type: 'integer', example: 1),
+                        new OA\Property(property: 'last_page', type: 'integer', example: 5),
+                        new OA\Property(property: 'per_page', type: 'integer', example: 20),
+                        new OA\Property(property: 'total', type: 'integer', example: 97),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'The location field must not be greater than 255 characters.'),
+                        new OA\Property(
+                            property: 'errors',
+                            type: 'object',
+                            example: ['location' => ['The location field must not be greater than 255 characters.']]
+                        ),
+                    ],
+                    type: 'object',
+                    examples: [
+                        new OA\Examples(
+                            example: 'unknownParameter',
+                            summary: 'Unknown query parameter',
+                            value: [
+                                'message' => 'The foo parameter is not allowed.',
+                                'errors' => ['foo' => ['The foo parameter is not allowed.']],
+                            ]
+                        ),
+                        new OA\Examples(
+                            example: 'invalidValue',
+                            summary: 'Invalid value',
+                            value: [
+                                'message' => 'The page field must be at least 1.',
+                                'errors' => ['page' => ['The page field must be at least 1.']],
+                            ]
+                        ),
+                    ]
+                )
+            ),
+        ]
+    )]
+    public function search(SearchProfilesRequest $request): JsonResponse
+    {
+        return response()->json($this->profileService->search($request->validated()), 200);
+    }
 
     #[OA\Get(
         path: '/api/v1/profiles/stats',
@@ -107,97 +217,8 @@ class ProfileController extends Controller
             'location' => ['sometimes', 'string', 'max:255'],
             'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
-        $limit = (int) ($filters['limit'] ?? 10);
 
-        $base = fn () => Profile::query()
-            ->when(isset($filters['account_status']), fn ($q) => $q->where('profiles.account_status', $filters['account_status']))
-            ->when(isset($filters['category_id']), fn ($q) => $q->where('profiles.category_id', $filters['category_id']))
-            ->when(isset($filters['location']), fn ($q) => $q->where('profiles.location', $filters['location']));
-
-        $grouped = fn (string $column) => $base()
-            ->selectRaw("profiles.{$column} as label, count(*) as total")
-            ->groupBy("profiles.{$column}")
-            ->orderByDesc('total')
-            ->orderBy('label');
-
-        $bySkill = $base()
-            ->join('profile_skill', 'profile_skill.profile_id', '=', 'profiles.id')
-            ->join('skills', 'skills.id', '=', 'profile_skill.skill_id')
-            ->selectRaw('skills.id as skill_id, skills.name as label, count(*) as total, avg(profile_skill.proficiency) as avg_proficiency, avg(profile_skill.years_experience) as avg_years_experience')
-            ->groupBy('skills.id', 'skills.name')
-            ->orderByDesc('total')
-            ->orderBy('label')
-            ->limit($limit)
-            ->toBase()
-            ->get()
-            ->map(fn ($row) => [
-                'skill_id' => $row->skill_id,
-                'label' => $row->label,
-                'total' => (int) $row->total,
-                'avg_proficiency' => $row->avg_proficiency === null ? null : round((float) $row->avg_proficiency, 2),
-                'avg_years_experience' => $row->avg_years_experience === null ? null : round((float) $row->avg_years_experience, 2),
-            ]);
-
-        $byStack = $base()
-            ->leftJoin('categories', 'categories.id', '=', 'profiles.category_id')
-            ->selectRaw('profiles.category_id as category_id, categories.name as label, count(*) as total')
-            ->groupBy('profiles.category_id', 'categories.name')
-            ->orderByDesc('total')
-            ->orderBy('label')
-            ->toBase()
-            ->get()
-            ->map(fn ($row) => [
-                'category_id' => $row->category_id,
-                'label' => $row->label,
-                'total' => (int) $row->total,
-            ]);
-
-        $monthExpression = match (DB::connection()->getDriverName()) {
-            'sqlite' => "strftime('%Y-%m', profiles.created_at)",
-            'pgsql' => "to_char(profiles.created_at, 'YYYY-MM')",
-            default => "date_format(profiles.created_at, '%Y-%m')",
-        };
-
-        $byMonth = $base()
-            ->selectRaw("{$monthExpression} as label, count(*) as total")
-            ->groupBy('label')
-            ->orderBy('label')
-            ->toBase()
-            ->get()
-            ->map(fn ($row) => ['label' => $row->label, 'total' => (int) $row->total])
-            ->values();
-
-        // Experience = highest years_experience declared across the profile's skills
-        $experience = DB::table('profile_skill')
-            ->selectRaw('profile_id, max(years_experience) as years')
-            ->groupBy('profile_id');
-
-        $rangeOrder = ['0-1', '2-3', '4-5', '6-10', '10+', 'unknown'];
-        $byExperience = $base()
-            ->leftJoinSub($experience, 'exp', 'exp.profile_id', '=', 'profiles.id')
-            ->selectRaw("case when exp.years is null then 'unknown' when exp.years <= 1 then '0-1' when exp.years <= 3 then '2-3' when exp.years <= 5 then '4-5' when exp.years <= 10 then '6-10' else '10+' end as label, count(*) as total")
-            ->groupBy('label')
-            ->toBase()
-            ->get()
-            ->sortBy(fn ($row) => array_search($row->label, $rangeOrder, true))
-            ->map(fn ($row) => ['label' => $row->label, 'total' => (int) $row->total])
-            ->values();
-
-        $simple = fn ($rows) => $rows->map(fn ($row) => [
-            'label' => $row->label instanceof \BackedEnum ? $row->label->value : $row->label,
-            'total' => (int) $row->total,
-        ])->values();
-
-        return response()->json(['data' => [
-            'total' => $base()->count(),
-            'by_account_status' => $simple($grouped('account_status')->toBase()->get()),
-            'by_status' => $simple($grouped('status')->toBase()->get()),
-            'by_stack' => $byStack,
-            'by_location' => $simple($grouped('location')->limit($limit)->toBase()->get()),
-            'by_skill' => $bySkill,
-            'by_signup_month' => $byMonth,
-            'by_experience_range' => $byExperience,
-        ]], 200);
+        return response()->json(['data' => $this->profileService->stats($filters)], 200);
     }
 
 
@@ -228,7 +249,6 @@ class ProfileController extends Controller
             'code' => 'NOT_IMPLEMENTED',
         ], 501);
     }
-
 
     #[OA\Get(
         path: '/api/v1/profiles/{profile}',
@@ -272,7 +292,6 @@ class ProfileController extends Controller
     {
         return response()->json(['data' => $profile->load(['skills', 'projects', 'category'])], 200);
     }
-
 
     #[OA\Patch(
         path: '/api/v1/profiles/{profile}',
@@ -333,12 +352,10 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request, Profile $profile): JsonResponse
     {
         $validated = $request->validated();
-
         $profile = $this->profileService->updateProfile($profile, $validated);
 
         return response()->json(['data' => $profile], 200);
     }
-
 
     #[OA\Post(
         path: '/api/v1/profiles/{profile}/validate',
@@ -407,7 +424,6 @@ class ProfileController extends Controller
 
         return response()->json(['data' => $profile], 200);
     }
-
 
     #[OA\Delete(
         path: '/api/v1/profiles/{profile}',
