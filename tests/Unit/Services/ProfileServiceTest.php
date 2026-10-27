@@ -474,13 +474,14 @@ class ProfileServiceTest extends TestCase
         $this->assertSame([$paris->id], $this->ids($result));
     }
 
-    public function test_location_filter_is_an_exact_match(): void
+    public function test_location_filter_is_a_case_insensitive_partial_match(): void
     {
-        $this->makeProfile(['location' => 'Paris']);
+        $paris = $this->makeProfile(['location' => 'Paris']);
+        $this->makeProfile(['location' => 'Lyon']);
 
-        $result = $this->profileService->search(['location' => 'Par']);
+        $result = $this->profileService->search(['location' => 'par']);
 
-        $this->assertSame(1, $result->total());
+        $this->assertSame([$paris->id], $this->ids($result));
     }
 
     public function test_it_filters_by_category_name(): void
@@ -492,6 +493,18 @@ class ProfileServiceTest extends TestCase
         $this->makeProfile(['category_id' => $designer->id]);
 
         $result = $this->profileService->search(['category' => 'Developer']);
+
+        $this->assertSame([$dev->id], $this->ids($result));
+    }
+
+    public function test_category_filter_is_a_case_insensitive_partial_match(): void
+    {
+        $developer = Category::factory()->create(['name' => 'Developer']);
+        Category::factory()->create(['name' => 'Designer']);
+
+        $dev = $this->makeProfile(['category_id' => $developer->id]);
+
+        $result = $this->profileService->search(['category' => 'devel']);
 
         $this->assertSame([$dev->id], $this->ids($result));
     }
