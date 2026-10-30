@@ -7,7 +7,6 @@ use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\{UpdateProfileRequest, ValidateProfileRequest, SearchProfilesRequest};
-use Illuminate\Support\Facades\Log;
 use App\Services\ProfileService;
 use OpenApi\Attributes as OA;
 
@@ -170,6 +169,58 @@ class ProfileController extends Controller
     {
         return response()->json($this->profileService->search($request->validated()), 200);
     }
+
+    #[OA\Get(
+        path: '/api/v1/profiles/stats',
+        operationId: 'profileStats',
+        summary: 'Profile statistics',
+        description: 'Returns aggregated profile counts grouped by account status, work status, stack (category), location and skill. Optional filters: account_status, category_id, location. `limit` caps the skills and locations lists (default 10, max 100).',
+        tags: ['Profile'],
+        parameters: [
+            new OA\Parameter(name: 'account_status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['PENDING_VALIDATION', 'VALIDATED', 'REJECTED'])),
+            new OA\Parameter(name: 'category_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'location', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'limit', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 10)),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Profile statistics',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'total', type: 'integer', example: 97),
+                                new OA\Property(property: 'by_account_status', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_status', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_stack', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_location', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_skill', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_signup_month', type: 'array', items: new OA\Items(type: 'object')),
+                                new OA\Property(property: 'by_experience_range', type: 'array', items: new OA\Items(type: 'object')),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function stats(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'account_status' => ['sometimes', 'string', 'in:PENDING_VALIDATION,VALIDATED,REJECTED'],
+            'category_id' => ['sometimes', 'integer'],
+            'location' => ['sometimes', 'string', 'max:255'],
+            'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        return response()->json(['data' => $this->profileService->stats($filters)], 200);
+    }
+
 
     #[OA\Post(
         path: '/api/v1/profiles',
