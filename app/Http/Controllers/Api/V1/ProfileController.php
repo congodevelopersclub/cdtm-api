@@ -70,17 +70,17 @@ class ProfileController extends Controller
         parameters: [
             new OA\Parameter(
                 name: 'location',
-                description: 'Exact location to match (case-insensitive, partial matches allowed)',
+                description: 'Partial, case-insensitive location match',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Paris')
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Par')
             ),
             new OA\Parameter(
                 name: 'category',
-                description: 'Exact category name to match',
+                description: 'Partial, case-insensitive category name match',
                 in: 'query',
                 required: false,
-                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Developer')
+                schema: new OA\Schema(type: 'string', maxLength: 255, example: 'Devel')
             ),
             new OA\Parameter(
                 name: 'skills',

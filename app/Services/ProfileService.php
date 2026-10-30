@@ -47,10 +47,13 @@ class ProfileService
     {
         return Profile::with(['skills', 'projects', 'category'])
             ->when($validatedData['location'] ?? null, function ($query, $location) {
-                $query->where('location', 'like', "%{$location}%");
+                $query->whereRaw('LOWER(profiles.location) LIKE ?', ['%' . mb_strtolower((string) $location) . '%']);
             })
             ->when($validatedData['category'] ?? null, function ($query, $category) {
-                $query->whereHas('category', fn ($q) => $q->where('name', $category));
+                $query->whereHas(
+                    'category',
+                    fn ($q) => $q->whereRaw('LOWER(categories.name) LIKE ?', ['%' . mb_strtolower((string) $category) . '%'])
+                );
             })
             ->when($validatedData['skills'] ?? null, function ($query, $skills) {
                 $names = array_values(array_unique(array_filter(array_map('trim', explode(',', $skills)), static fn (string $name): bool => $name !== '')));
