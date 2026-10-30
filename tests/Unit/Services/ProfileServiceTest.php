@@ -145,7 +145,7 @@ class ProfileServiceTest extends TestCase
     {
         $profile = Profile::factory()->create();
         $existingSkill = Skill::factory()->create(['name' => 'PHP', 'slug' => 'php']);
-        $profile->skills()->attach($existingSkill->id, ['proficiency' => 'expert', 'years_experience' => 5]);
+        $profile->skills()->attach($existingSkill->id, ['proficiency' => 5, 'years_experience' => 5]);
 
         $this->profileService->updateProfile($profile, [
             'name' => 'Someone Else',
@@ -164,7 +164,7 @@ class ProfileServiceTest extends TestCase
 
         $this->profileService->updateProfile($profile, [
             'skills' => [
-                ['name' => 'Laravel', 'proficiency' => 'advanced', 'years_experience' => 3],
+                ['name' => 'Laravel', 'proficiency' => 4, 'years_experience' => 3],
             ],
         ]);
 
@@ -176,7 +176,7 @@ class ProfileServiceTest extends TestCase
         $this->assertDatabaseHas('profile_skill', [
             'profile_id'        => $profile->id,
             'skill_id'          => $skill->id,
-            'proficiency'       => 'advanced',
+            'proficiency'       => 4,
             'years_experience'  => 3,
         ]);
     }
@@ -189,7 +189,7 @@ class ProfileServiceTest extends TestCase
 
         $this->profileService->updateProfile($profile, [
             'skills' => [
-                ['name' => 'Laravel', 'proficiency' => 'expert', 'years_experience' => 7],
+                ['name' => 'Laravel', 'proficiency' => 5, 'years_experience' => 7],
             ],
         ]);
 
@@ -198,7 +198,7 @@ class ProfileServiceTest extends TestCase
         $this->assertDatabaseHas('profile_skill', [
             'profile_id' => $profile->id,
             'skill_id'   => $existingSkill->id,
-            'proficiency' => 'expert',
+            'proficiency' => 5,
         ]);
     }
 
@@ -210,13 +210,13 @@ class ProfileServiceTest extends TestCase
         $skillToRemove = Skill::factory()->create(['name' => 'Ruby', 'slug' => 'ruby']);
 
         $profile->skills()->sync([
-            $skillToKeep->id   => ['proficiency' => 'expert', 'years_experience' => 5],
-            $skillToRemove->id => ['proficiency' => 'beginner', 'years_experience' => 1],
+            $skillToKeep->id   => ['proficiency' => 5, 'years_experience' => 5],
+            $skillToRemove->id => ['proficiency' => 1, 'years_experience' => 1],
         ]);
 
         $this->profileService->updateProfile($profile, [
             'skills' => [
-                ['name' => 'PHP', 'proficiency' => 'expert', 'years_experience' => 5],
+                ['name' => 'PHP', 'proficiency' => 5, 'years_experience' => 5],
             ],
         ]);
 
@@ -236,7 +236,7 @@ class ProfileServiceTest extends TestCase
     {
         $profile = Profile::factory()->create();
         $skill = Skill::factory()->create();
-        $profile->skills()->attach($skill->id, ['proficiency' => 'expert', 'years_experience' => 5]);
+        $profile->skills()->attach($skill->id, ['proficiency' => 5, 'years_experience' => 5]);
 
         $this->profileService->updateProfile($profile, [
             'skills' => [],
@@ -407,7 +407,7 @@ class ProfileServiceTest extends TestCase
 
         $this->profileService->updateProfile($profile, [
             'name'     => 'Transactional Update',
-            'skills'   => [['name' => 'Go', 'proficiency' => 'intermediate']],
+            'skills'   => [['name' => 'Go', 'proficiency' => 3]],
             'projects' => [['title' => 'Some Project']],
         ]);
 
