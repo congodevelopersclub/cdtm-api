@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ProfileAccountStatus;
 use App\Models\{Profile, Skill, Project};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -46,6 +47,7 @@ class ProfileService
     public function search(array $validatedData): LengthAwarePaginator
     {
         return Profile::with(['skills', 'projects', 'category'])
+            ->visible()
             ->when($validatedData['location'] ?? null, function ($query, $location) {
                 $query->whereRaw('LOWER(profiles.location) LIKE ?', ['%' . mb_strtolower((string) $location) . '%']);
             })
@@ -80,6 +82,39 @@ class ProfileService
             $profile->account_status = $validatedData['account_status'];
             $profile->save();
         }
+
+        return $profile;
+    }
+
+    /**
+     * Disable a profile so it no longer shows up in listings and searches.
+     * The current status is remembered so it can be restored later.
+     */
+    public function disableProfile(Profile $profile): Profile
+    {
+        if ($profile->isDisabled()) {
+            return $profile;
+        }
+
+        $profile->account_status_before_disabled = $profile->account_status;
+        $profile->account_status = ProfileAccountStatus::DISABLED;
+        $profile->save();
+
+        return $profile;
+    }
+
+    /**
+     * Enable a previously disabled profile by restoring its former status.
+     */
+    public function enableProfile(Profile $profile): Profile
+    {
+        if (! $profile->isDisabled()) {
+            return $profile;
+        }
+
+        $profile->account_status = $profile->account_status_before_disabled ?? ProfileAccountStatus::PENDING_VALIDATION;
+        $profile->account_status_before_disabled = null;
+        $profile->save();
 
         return $profile;
     }

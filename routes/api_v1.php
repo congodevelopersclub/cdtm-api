@@ -21,6 +21,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('profiles/{profile}', [ProfileController::class, 'update']);
     Route::delete('profiles/{profile}', [ProfileController::class, 'destroy']);
     Route::put('profiles/{profile}/validate', [ProfileController::class, 'validateProfile']);
+    Route::put('profiles/{profile}/disable', [ProfileController::class, 'disable']);
+    Route::put('profiles/{profile}/enable', [ProfileController::class, 'enable']);
 
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 });

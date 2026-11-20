@@ -138,4 +138,143 @@ class ProfileControllerTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_owner_can_disable_their_profile(): void
+    {
+        $owner = User::factory()->create();
+        $profile = Profile::factory()->validated()->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/disable")
+            ->assertOk()
+            ->assertJsonPath('data.account_status', ProfileAccountStatus::DISABLED->value)
+            ->assertJsonMissingPath('data.account_status_before_disabled');
+
+        $profile->refresh();
+        $this->assertSame(ProfileAccountStatus::DISABLED, $profile->account_status);
+        $this->assertSame(ProfileAccountStatus::VALIDATED, $profile->account_status_before_disabled);
+    }
+
+    public function test_user_cannot_disable_someone_else_profile(): void
+    {
+        $profile = Profile::factory()->validated()->create();
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/disable")
+            ->assertForbidden();
+
+        $this->assertSame(ProfileAccountStatus::VALIDATED, $profile->refresh()->account_status);
+    }
+
+    public function test_guest_cannot_disable_a_profile(): void
+    {
+        $profile = Profile::factory()->create();
+
+        $this->app['auth']->forgetGuards();
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/disable")
+            ->assertUnauthorized();
+    }
+
+    public function test_disabling_twice_keeps_the_original_status(): void
+    {
+        $owner = User::factory()->create();
+        $profile = Profile::factory()->rejected()->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/disable")->assertOk();
+        $this->putJson("/api/v1/profiles/{$profile->id}/disable")->assertOk();
+
+        $this->assertSame(ProfileAccountStatus::REJECTED, $profile->refresh()->account_status_before_disabled);
+    }
+
+    public function test_owner_can_enable_their_profile_and_get_back_the_previous_status(): void
+    {
+        $owner = User::factory()->create();
+        $profile = Profile::factory()->disabled(ProfileAccountStatus::VALIDATED)->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/enable")
+            ->assertOk()
+            ->assertJsonPath('data.account_status', ProfileAccountStatus::VALIDATED->value);
+
+        $this->assertNull($profile->refresh()->account_status_before_disabled);
+    }
+
+    public function test_enabling_a_profile_that_is_not_disabled_changes_nothing(): void
+    {
+        $owner = User::factory()->create();
+        $profile = Profile::factory()->pendingValidation()->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/enable")
+            ->assertOk()
+            ->assertJsonPath('data.account_status', ProfileAccountStatus::PENDING_VALIDATION->value);
+    }
+
+    public function test_user_cannot_enable_someone_else_profile(): void
+    {
+        $profile = Profile::factory()->disabled()->create();
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/enable")
+            ->assertForbidden();
+
+        $this->assertSame(ProfileAccountStatus::DISABLED, $profile->refresh()->account_status);
+    }
+
+    public function test_disabled_profiles_are_not_listed(): void
+    {
+        $visible = Profile::factory()->validated()->create();
+        Profile::factory()->disabled()->create();
+
+        $this->getJson('/api/v1/profiles')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $visible->id);
+    }
+
+    public function test_disabled_profiles_do_not_appear_in_search_results(): void
+    {
+        $visible = Profile::factory()->validated()->create(['location' => 'Brazzaville']);
+        Profile::factory()->disabled()->create(['location' => 'Brazzaville']);
+
+        $this->getJson('/api/v1/profiles/search?location=Brazzaville')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $visible->id);
+    }
+
+    public function test_disabled_profile_page_is_hidden_from_other_users(): void
+    {
+        $profile = Profile::factory()->disabled()->create();
+
+        $this->getJson("/api/v1/profiles/{$profile->id}")
+            ->assertNotFound();
+    }
+
+    public function test_owner_can_still_see_their_disabled_profile(): void
+    {
+        $owner = User::factory()->create();
+        $profile = Profile::factory()->disabled()->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson("/api/v1/profiles/{$profile->id}")
+            ->assertOk()
+            ->assertJsonPath('data.account_status', ProfileAccountStatus::DISABLED->value);
+    }
+
+    public function test_validate_endpoint_cannot_be_used_to_disable_a_profile(): void
+    {
+        $profile = Profile::factory()->validated()->create();
+
+        $this->putJson("/api/v1/profiles/{$profile->id}/validate", [
+            'account_status' => ProfileAccountStatus::DISABLED->value,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['account_status']);
+    }
 }
