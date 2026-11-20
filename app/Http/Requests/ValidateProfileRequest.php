@@ -25,7 +25,7 @@ class ValidateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'account_status' => ['required', new Enum(\App\Enums\ProfileAccountStatus::class)],
+            'account_status' => ['required', (new Enum(\App\Enums\ProfileAccountStatus::class))->only(\App\Enums\ProfileAccountStatus::moderationStatuses())],
         ];
     }
 }

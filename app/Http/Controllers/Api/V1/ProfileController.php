@@ -55,7 +55,7 @@ class ProfileController extends Controller
     )]
     public function index(): JsonResponse
     {
-        $posts = Profile::with(['skills', 'projects', 'category'])->paginate(20);
+        $posts = Profile::with(['skills', 'projects', 'category'])->visible()->paginate(20);
         return response()->json($posts, 200);
     }
 
@@ -203,7 +203,8 @@ class ProfileController extends Controller
         path: '/api/v1/profiles/{profile}',
         operationId: 'profileShow',
         summary: 'Get a single profile',
-        description: 'Returns a profile (route-model-bound by ID) along with its skills, projects and category.',
+        description: 'Returns a profile (route-model-bound by ID) along with its skills, projects and category. '
+            . 'A disabled profile is only returned to its owner; anyone else gets a 404.',
         tags: ['Profile'],
         parameters: [
             new OA\Parameter(
@@ -239,6 +240,11 @@ class ProfileController extends Controller
     )]
     public function show(Profile $profile): JsonResponse
     {
+        // This route is public, so the caller is resolved through Sanctum only if a token was sent.
+        if ($profile->isDisabled() && ! $profile->isOwnedBy(auth('sanctum')->user())) {
+            abort(404);
+        }
+
         return response()->json(['data' => $profile->load(['skills', 'projects', 'category'])], 200);
     }
 
@@ -372,6 +378,88 @@ class ProfileController extends Controller
         $profile = $this->profileService->validateProfile($profile, $validated);
 
         return response()->json(['data' => $profile], 200);
+    }
+
+    #[OA\Put(
+        path: '/api/v1/profiles/{profile}/disable',
+        operationId: 'profileDisable',
+        summary: 'Disable a profile',
+        description: 'Disables the profile of the authenticated user. A disabled profile no longer appears in the '
+            . 'profiles list, in searches, nor on its public page, until its owner enables it again. '
+            . 'Only the owner of the profile can perform this action. Calling it on an already disabled profile has no effect.',
+        security: [['bearerAuth' => []]],
+        tags: ['Profile'],
+        parameters: [
+            new OA\Parameter(
+                name: 'profile',
+                description: 'ID of the profile to disable',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Profile disabled successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', ref: '#/components/schemas/Profile'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'The authenticated user does not own this profile'),
+            new OA\Response(response: 404, description: 'Profile not found'),
+        ]
+    )]
+    public function disable(Request $request, Profile $profile): JsonResponse
+    {
+        abort_unless($profile->isOwnedBy($request->user()), 403, 'You can only disable your own profile.');
+
+        return response()->json(['data' => $this->profileService->disableProfile($profile)], 200);
+    }
+
+    #[OA\Put(
+        path: '/api/v1/profiles/{profile}/enable',
+        operationId: 'profileEnable',
+        summary: 'Enable a disabled profile',
+        description: 'Enables again a profile previously disabled by its owner and restores the status it had before '
+            . '(e.g. VALIDATED). Only the owner of the profile can perform this action. '
+            . 'Calling it on a profile that is not disabled has no effect.',
+        security: [['bearerAuth' => []]],
+        tags: ['Profile'],
+        parameters: [
+            new OA\Parameter(
+                name: 'profile',
+                description: 'ID of the profile to enable',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'uuid', example: '123e4567-e89b-12d3-a456-426614174000')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Profile enabled successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', ref: '#/components/schemas/Profile'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'The authenticated user does not own this profile'),
+            new OA\Response(response: 404, description: 'Profile not found'),
+        ]
+    )]
+    public function enable(Request $request, Profile $profile): JsonResponse
+    {
+        abort_unless($profile->isOwnedBy($request->user()), 403, 'You can only enable your own profile.');
+
+        return response()->json(['data' => $this->profileService->enableProfile($profile)], 200);
     }
 
     #[OA\Delete(

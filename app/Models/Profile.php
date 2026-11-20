@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use App\Enums\LinkType;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Auth\Authenticatable;
+use App\Enums\{LinkType, ProfileAccountStatus};
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
@@ -71,11 +73,13 @@ class Profile extends BaseModel
 
     protected $hidden = [
         'category_id',
+        'account_status_before_disabled',
     ];
 
     protected $casts = [
         'is_confirmed' => 'boolean',
-        'account_status' => \App\Enums\ProfileAccountStatus::class,
+        'account_status' => ProfileAccountStatus::class,
+        'account_status_before_disabled' => ProfileAccountStatus::class,
         'links' => 'array'
     ];
 
@@ -114,6 +118,26 @@ class Profile extends BaseModel
             ->withPivot(['proficiency', 'years_experience']);
     }
 
+
+    /**
+     * Only keep profiles that have not been disabled by their owner.
+     *
+     * @param Builder<Profile> $query
+     */
+    public function scopeVisible(Builder $query): void
+    {
+        $query->where('account_status', '!=', ProfileAccountStatus::DISABLED->value);
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->account_status === ProfileAccountStatus::DISABLED;
+    }
+
+    public function isOwnedBy(?Authenticatable $user): bool
+    {
+        return $user !== null && $this->user_id === $user->getAuthIdentifier();
+    }
 
     /**
      * @param LinkType $type

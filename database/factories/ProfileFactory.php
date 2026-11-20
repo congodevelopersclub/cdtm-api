@@ -72,6 +72,17 @@ class ProfileFactory extends Factory
     }
 
     /**
+     * Indicate that the profile has been disabled by its owner.
+     */
+    public function disabled(?\App\Enums\ProfileAccountStatus $previousStatus = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'account_status' => \App\Enums\ProfileAccountStatus::DISABLED,
+            'account_status_before_disabled' => $previousStatus ?? \App\Enums\ProfileAccountStatus::VALIDATED,
+        ]);
+    }
+
+    /**
      * Configure the model factory.
      */
     public function configure(): static
